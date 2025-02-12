@@ -19,6 +19,15 @@ const Analysis = React.lazy(() => import("./pages/Analysis"));
 const History = React.lazy(() => import("./pages/History"));
 const Settings = React.lazy(() => import("./pages/Settings"));
 const Monitor = React.lazy(() => import("./pages/Monitor"));
+const Login = React.lazy(() => import("./pages/Login"));
+
+// 路由守卫组件
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const isAuthenticated = localStorage.getItem("userInfo") !== null;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+};
 
 const App: React.FC = () => {
   const themeMode = useSelector((state: RootState) => state.config.theme);
@@ -33,7 +42,15 @@ const App: React.FC = () => {
     >
       <Router>
         <Routes>
-          <Route path="/" element={<MainLayout />}>
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <MainLayout />
+              </PrivateRoute>
+            }
+          >
             {/* 根路径重定向到sleep */}
             <Route index element={<Navigate to="/sleep" replace />} />
             <Route path="sleep" element={<Sleep />} />
