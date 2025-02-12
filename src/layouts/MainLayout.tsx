@@ -8,6 +8,7 @@ import {
   HistoryOutlined,
   DashboardOutlined,
   BulbOutlined,
+  RestOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
 import { toggleTheme } from "../store/slices/configSlice";
@@ -30,9 +31,9 @@ const MainLayout: React.FC = () => {
   // 菜单项配置
   const menuItems = [
     {
-      key: "/monitor",
-      icon: <DashboardOutlined />,
-      label: "实时监测",
+      key: "/sleep",
+      icon: <RestOutlined />,
+      label: "睡眠数据",
     },
     {
       key: "/analysis",
@@ -45,6 +46,11 @@ const MainLayout: React.FC = () => {
       label: "历史记录",
     },
     {
+      key: "/monitor",
+      icon: <DashboardOutlined />,
+      label: "实时监测",
+    },
+    {
       key: "/settings",
       icon: <SettingOutlined />,
       label: "系统设置",
@@ -53,13 +59,13 @@ const MainLayout: React.FC = () => {
 
   // 获取当前选中的菜单项
   const getSelectedKey = () => {
-    // 如果是根路径，返回 "/monitor"
-    if (location.pathname === "/") return "/monitor";
+    // 如果是根路径，返回 "/sleep"
+    if (location.pathname === "/") return "/sleep";
     // 否则查找匹配的菜单项
     const matchedItem = menuItems.find((item) =>
       location.pathname.startsWith(item.key)
     );
-    return matchedItem ? matchedItem.key : "/monitor";
+    return matchedItem ? matchedItem.key : "/sleep";
   };
 
   return (

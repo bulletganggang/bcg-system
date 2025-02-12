@@ -14,10 +14,11 @@ import type { RootState } from "./store";
 import React from "react";
 
 // 懒加载页面组件
-const Monitor = React.lazy(() => import("./pages/Monitor"));
+const Sleep = React.lazy(() => import("./pages/Sleep"));
 const Analysis = React.lazy(() => import("./pages/Analysis"));
 const History = React.lazy(() => import("./pages/History"));
 const Settings = React.lazy(() => import("./pages/Settings"));
+const Monitor = React.lazy(() => import("./pages/Monitor"));
 
 const App: React.FC = () => {
   const themeMode = useSelector((state: RootState) => state.config.theme);
@@ -33,11 +34,12 @@ const App: React.FC = () => {
       <Router>
         <Routes>
           <Route path="/" element={<MainLayout />}>
-            {/* 根路径重定向到monitor */}
-            <Route index element={<Navigate to="/monitor" replace />} />
-            <Route path="monitor" element={<Monitor />} />
+            {/* 根路径重定向到sleep */}
+            <Route index element={<Navigate to="/sleep" replace />} />
+            <Route path="sleep" element={<Sleep />} />
             <Route path="analysis" element={<Analysis />} />
             <Route path="history" element={<History />} />
+            <Route path="monitor" element={<Monitor />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

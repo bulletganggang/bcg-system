@@ -1,37 +1,33 @@
-import React, { useState } from "react";
-import {
-  Card,
-  Row,
-  Col,
-  Select,
-  DatePicker,
-  Button,
-  Space,
-  Table,
-  Statistic,
-} from "antd";
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, Row, Col, Select, DatePicker, Space } from "antd";
 import type { DatePickerProps } from "antd/es/date-picker";
-import type { ColumnsType } from "antd/es/table";
 import ReactECharts from "echarts-for-react";
-import { useChartConfig } from "../../hooks/useChartConfig";
 import dayjs from "dayjs";
 
-type ReportType = "daily" | "weekly" | "monthly";
+type ReportType = "weekly" | "monthly";
 
 interface AnalysisData {
   date: string;
-  avgHeartRate: number;
-  avgRespirationRate: number;
-  avgHealthScore: number;
-  abnormalCount: number;
+  sleepScore: number;
+  sleepStages: {
+    lightSleep: number;
+    deepSleep: number;
+    remSleep: number;
+  };
+  sleepTime: string;
+  wakeTime: string;
+}
+
+interface EChartsTooltipParams {
+  name: string;
+  value: [string, string];
+  data: [string, string];
 }
 
 const Analysis: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
-  const [analysisType, setAnalysisType] = useState<ReportType>("daily");
-  const [loading, setLoading] = useState(false);
+  const [analysisType, setAnalysisType] = useState<ReportType>("weekly");
   const [analysisData, setAnalysisData] = useState<AnalysisData[]>([]);
-  const { echartsOption } = useChartConfig();
 
   // 处理日期选择变化
   const handleDateChange: DatePickerProps["onChange"] = (date) => {
@@ -46,185 +42,286 @@ const Analysis: React.FC = () => {
   };
 
   // 加载分析数据
-  const loadAnalysisData = async () => {
+  const loadAnalysisData = useCallback(async () => {
     if (!selectedDate) return;
 
-    setLoading(true);
     try {
-      // 根据报告类型确定数据长度和起始日期
-      const dataLength = {
-        daily: 24, // 日报告显示24小时的数据
-        weekly: 7,
-        monthly: selectedDate.daysInMonth(),
-      }[analysisType];
+      let startDate: dayjs.Dayjs;
+      let endDate: dayjs.Dayjs;
+      const today = dayjs();
 
-      let startDate = selectedDate;
-      if (analysisType === "daily") {
-        // 日报告从当天0点开始
-        startDate = selectedDate.startOf("day");
-      } else if (analysisType === "weekly") {
+      if (analysisType === "weekly") {
+        // 获取所选日期所在周的周日（作为开始日期）
         startDate = selectedDate.startOf("week");
-      } else if (analysisType === "monthly") {
+        // 获取所选日期所在周的周六（作为结束日期）
+        endDate = selectedDate.endOf("week");
+      } else {
+        // 获取所选月份的第一天
         startDate = selectedDate.startOf("month");
+        // 获取所选月份的最后一天
+        endDate = selectedDate.endOf("month");
       }
 
-      // 生成模拟数据
-      const mockData: AnalysisData[] = Array.from(
-        { length: dataLength },
-        (_, i) => {
-          let date;
-          if (analysisType === "daily") {
-            // 日报告按小时递增
-            date = startDate.add(i, "hour").toDate();
-          } else {
-            // 周报告和月报告按天递增
-            date = startDate.add(i, "day").toDate();
-          }
+      // 如果结束日期超过今天，则使用今天作为结束日期
+      if (endDate.isAfter(today)) {
+        endDate = today;
+      }
 
-          return {
-            date:
-              analysisType === "daily"
-                ? date.toLocaleString() // 修改为显示完整的日期时间格式
-                : date.toLocaleDateString(), // 周报告和月报告显示日期
-            avgHeartRate: 70 + Math.random() * 10,
-            avgRespirationRate: 16 + Math.random() * 4,
-            avgHealthScore: 80 + Math.random() * 20,
-            abnormalCount: Math.floor(Math.random() * 5),
-          };
-        }
-      );
+      // 计算日期范围内的天数
+      const days = endDate.diff(startDate, "day") + 1;
+
+      const mockData: AnalysisData[] = Array.from({ length: days }, (_, i) => ({
+        date: startDate.add(i, "day").format("MM-DD"),
+        sleepScore: 60 + Math.floor(Math.random() * 30),
+        sleepStages: {
+          lightSleep: 200 + Math.floor(Math.random() * 100),
+          deepSleep: 100 + Math.floor(Math.random() * 50),
+          remSleep: 80 + Math.floor(Math.random() * 40),
+        },
+        sleepTime: `${20 + Math.floor(Math.random() * 4)}:${Math.floor(
+          Math.random() * 60
+        )
+          .toString()
+          .padStart(2, "0")}`,
+        wakeTime: `${6 + Math.floor(Math.random() * 4)}:${Math.floor(
+          Math.random() * 60
+        )
+          .toString()
+          .padStart(2, "0")}`,
+      }));
+
       setAnalysisData(mockData);
     } catch (error) {
       console.error("加载分析数据失败:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [selectedDate, analysisType]);
 
-  // 获取当前报告类型对应的DatePicker配置
-  const getDatePickerProps = (): DatePickerProps => {
-    const baseProps: DatePickerProps = {
-      onChange: handleDateChange,
-      value: selectedDate,
-      allowClear: true,
-      style: { width: 200 },
-      disabledDate: (current) => current && current.isAfter(dayjs()),
+  // 当日期或报告类型改变时自动加载数据
+  useEffect(() => {
+    if (selectedDate) {
+      loadAnalysisData();
+    }
+  }, [selectedDate, loadAnalysisData]);
+
+  // 计算睡眠评分统计数据
+  const getSleepScoreStats = () => {
+    if (analysisData.length === 0) {
+      return { max: 0, min: 0, avg: 0 };
+    }
+    const scores = analysisData.map((item) => item.sleepScore);
+    return {
+      max: Math.max(...scores),
+      min: Math.min(...scores),
+      avg: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length),
     };
-
-    switch (analysisType) {
-      case "daily":
-        return baseProps;
-      case "weekly":
-        return { ...baseProps, picker: "week" as const };
-      case "monthly":
-        return { ...baseProps, picker: "month" as const };
-      default:
-        return baseProps;
-    }
   };
 
-  // 表格列定义
-  const columns: ColumnsType<AnalysisData> = [
-    {
-      title: analysisType === "daily" ? "时间" : "日期",
-      dataIndex: "date",
-      key: "date",
-    },
-    {
-      title: "平均心率",
-      dataIndex: "avgHeartRate",
-      key: "avgHeartRate",
-      render: (value: number) => value.toFixed(1),
-    },
-    {
-      title: "平均呼吸率",
-      dataIndex: "avgRespirationRate",
-      key: "avgRespirationRate",
-      render: (value: number) => value.toFixed(1),
-    },
-    {
-      title: "平均健康评分",
-      dataIndex: "avgHealthScore",
-      key: "avgHealthScore",
-      render: (value: number) => value.toFixed(1),
-    },
-    {
-      title: "异常次数",
-      dataIndex: "abnormalCount",
-      key: "abnormalCount",
-    },
-  ];
+  const sleepScoreStats = getSleepScoreStats();
 
-  // 图表配置
-  const chartOption = {
-    ...echartsOption,
+  // 睡眠质量评分图表配置
+  const scoreChartOption = {
     tooltip: {
       trigger: "axis",
-      axisPointer: {
-        type: "cross",
-      },
     },
     xAxis: {
       type: "category",
       data: analysisData.map((item) => item.date),
       axisLabel: {
-        interval: analysisType === "daily" ? 2 : 0,
-        rotate: analysisType === "daily" ? 45 : 0,
+        interval: 0,
       },
     },
     yAxis: {
       type: "value",
-      splitLine: {
-        show: true,
-      },
-    },
-    grid: {
-      left: "3%",
-      right: "4%",
-      bottom: "10%",
-      containLabel: true,
+      min: 0,
+      max: 100,
     },
     series: [
       {
-        name: "平均心率",
-        type: "line",
-        smooth: true,
-        data: analysisData.map((item) => [item.date, item.avgHeartRate]),
-        symbolSize: 6,
-      },
-      {
-        name: "平均呼吸率",
-        type: "line",
-        smooth: true,
-        data: analysisData.map((item) => [item.date, item.avgRespirationRate]),
-        symbolSize: 6,
-      },
-      {
-        name: "健康评分",
-        type: "line",
-        smooth: true,
-        data: analysisData.map((item) => [item.date, item.avgHealthScore]),
-        symbolSize: 6,
+        data: analysisData.map((item) => item.sleepScore),
+        type: "bar",
+        itemStyle: {
+          color: "#1890ff",
+        },
       },
     ],
   };
 
-  // 计算统计数据
-  const statistics = {
-    avgHeartRate:
-      analysisData.reduce((sum, item) => sum + item.avgHeartRate, 0) /
-      (analysisData.length || 1),
-    avgRespirationRate:
-      analysisData.reduce((sum, item) => sum + item.avgRespirationRate, 0) /
-      (analysisData.length || 1),
-    avgHealthScore:
-      analysisData.reduce((sum, item) => sum + item.avgHealthScore, 0) /
-      (analysisData.length || 1),
-    totalAbnormal: analysisData.reduce(
-      (sum, item) => sum + item.abnormalCount,
-      0
-    ),
+  // 睡眠阶段时间图表配置
+  const stagesChartOption = {
+    tooltip: {
+      trigger: "axis",
+      axisPointer: {
+        type: "shadow",
+      },
+    },
+    legend: {
+      data: ["浅睡眠", "深睡眠", "REM睡眠"],
+      bottom: 0,
+    },
+    xAxis: {
+      type: "category",
+      data: analysisData.map((item) => item.date),
+      axisLabel: {
+        interval: 0,
+      },
+    },
+    yAxis: {
+      type: "value",
+    },
+    series: [
+      {
+        name: "浅睡眠",
+        type: "bar",
+        stack: "total",
+        data: analysisData.map((item) => item.sleepStages.lightSleep),
+        itemStyle: { color: "#36A2EB" },
+      },
+      {
+        name: "深睡眠",
+        type: "bar",
+        stack: "total",
+        data: analysisData.map((item) => item.sleepStages.deepSleep),
+        itemStyle: { color: "#0000FF" },
+      },
+      {
+        name: "REM睡眠",
+        type: "bar",
+        stack: "total",
+        data: analysisData.map((item) => item.sleepStages.remSleep),
+        itemStyle: { color: "#FF6384" },
+      },
+    ],
   };
+
+  // 入睡时间分布图表配置
+  const sleepTimeScatterOption = {
+    tooltip: {
+      trigger: "axis",
+      formatter: function (params: EChartsTooltipParams[]) {
+        return `${params[0].name}: ${params[0].value[1]}`;
+      },
+    },
+    grid: {
+      left: "10%",
+      right: "10%",
+    },
+    xAxis: {
+      type: "category",
+      data: analysisData.map((item) => item.date),
+      axisLabel: {
+        interval: 0,
+        rotate: 30,
+      },
+    },
+    yAxis: {
+      type: "category",
+      data: ["20:00", "21:00", "22:00", "23:00", "00:00", "01:00", "02:00"],
+      inverse: false,
+    },
+    series: [
+      {
+        name: "入睡时间",
+        type: "scatter",
+        symbolSize: 15,
+        data: analysisData.map((item) => {
+          const hour = parseInt(item.sleepTime.split(":")[0]);
+          const timeList = [
+            "20:00",
+            "21:00",
+            "22:00",
+            "23:00",
+            "00:00",
+            "01:00",
+            "02:00",
+          ];
+          const index = hour >= 20 ? hour - 20 : hour + 4; // 将时间转换为y轴索引
+          return [item.date, timeList[index]];
+        }),
+        itemStyle: {
+          color: "#1890ff",
+        },
+        label: {
+          show: true,
+          formatter: function (params: EChartsTooltipParams) {
+            return params.value[1];
+          },
+          position: "right",
+        },
+      },
+    ],
+  };
+
+  // 起床时间分布图表配置
+  const wakeTimeScatterOption = {
+    tooltip: {
+      trigger: "axis",
+      formatter: function (params: EChartsTooltipParams[]) {
+        return `${params[0].name}: ${params[0].value[1]}`;
+      },
+    },
+    grid: {
+      left: "10%",
+      right: "10%",
+    },
+    xAxis: {
+      type: "category",
+      data: analysisData.map((item) => item.date),
+      axisLabel: {
+        interval: 0,
+        rotate: 30,
+      },
+    },
+    yAxis: {
+      type: "category",
+      data: ["04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00"],
+      inverse: false,
+    },
+    series: [
+      {
+        name: "起床时间",
+        type: "scatter",
+        symbolSize: 15,
+        data: analysisData.map((item) => {
+          const hour = parseInt(item.wakeTime.split(":")[0]);
+          const timeList = [
+            "04:00",
+            "05:00",
+            "06:00",
+            "07:00",
+            "08:00",
+            "09:00",
+            "10:00",
+          ];
+          const index = hour - 4; // 将时间转换为y轴索引
+          return [item.date, timeList[index]];
+        }),
+        itemStyle: {
+          color: "#ff4d4f",
+        },
+        label: {
+          show: true,
+          formatter: function (params: EChartsTooltipParams) {
+            return params.value[1];
+          },
+          position: "right",
+        },
+      },
+    ],
+  };
+
+  // 获取最早和最晚起床时间
+  const getWakeTimeRange = () => {
+    if (analysisData.length === 0)
+      return { earliest: "00:00", latest: "00:00" };
+
+    const times = analysisData.map((item) => item.wakeTime);
+    return {
+      earliest: times.reduce((a, b) => (a < b ? a : b)),
+      latest: times.reduce((a, b) => (a > b ? a : b)),
+    };
+  };
+
+  const wakeTimeRange = getWakeTimeRange();
 
   return (
     <div>
@@ -235,81 +332,170 @@ const Analysis: React.FC = () => {
             onChange={handleAnalysisTypeChange}
             style={{ width: 120 }}
             options={[
-              { label: "日报告", value: "daily" },
               { label: "周报告", value: "weekly" },
               { label: "月报告", value: "monthly" },
             ]}
           />
-          <DatePicker {...getDatePickerProps()} />
-          <Button
-            type="primary"
-            onClick={loadAnalysisData}
-            disabled={!selectedDate}
-          >
-            生成分析
-          </Button>
+          <DatePicker
+            picker={analysisType === "weekly" ? "week" : "month"}
+            value={selectedDate}
+            onChange={handleDateChange}
+            disabledDate={(current) => current && current.isAfter(dayjs())}
+            format={analysisType === "weekly" ? "YYYY-wo" : "YYYY-MM"}
+          />
         </Space>
 
         {analysisData.length > 0 && (
-          <>
-            <Row gutter={16} style={{ marginBottom: 16 }}>
-              <Col span={6}>
-                <Card>
-                  <Statistic
-                    title="平均心率"
-                    value={statistics.avgHeartRate}
-                    precision={1}
-                    suffix="BPM"
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic
-                    title="平均呼吸率"
-                    value={statistics.avgRespirationRate}
-                    precision={1}
-                    suffix="次/分"
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic
-                    title="平均健康评分"
-                    value={statistics.avgHealthScore}
-                    precision={1}
-                    suffix="/100"
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card>
-                  <Statistic
-                    title="异常次数"
-                    value={statistics.totalAbnormal}
-                    suffix="次"
-                  />
-                </Card>
-              </Col>
-            </Row>
+          <Row gutter={[16, 16]}>
+            <Col span={24}>
+              <Card title="睡眠质量评分">
+                <Row gutter={[16, 16]}>
+                  <Col span={24}>
+                    <div
+                      style={{
+                        marginBottom: "16px",
+                        display: "flex",
+                        gap: "24px",
+                      }}
+                    >
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "16px",
+                            color: "#cf1322",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          最大值
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "24px",
+                            fontWeight: "bold",
+                            color: "#cf1322",
+                          }}
+                        >
+                          {sleepScoreStats.max}
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "16px",
+                            color: "#faad14",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          平均值
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "24px",
+                            fontWeight: "bold",
+                            color: "#faad14",
+                          }}
+                        >
+                          {sleepScoreStats.avg}
+                        </div>
+                      </div>
+                      <div>
+                        <div
+                          style={{
+                            fontSize: "16px",
+                            color: "#52c41a",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          最小值
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "24px",
+                            fontWeight: "bold",
+                            color: "#52c41a",
+                          }}
+                        >
+                          {sleepScoreStats.min}
+                        </div>
+                      </div>
+                    </div>
+                  </Col>
+                  <Col span={24}>
+                    <ReactECharts
+                      option={scoreChartOption}
+                      style={{ height: "300px" }}
+                    />
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
 
-            <Card type="inner" title="趋势分析" style={{ marginBottom: 16 }}>
-              <ReactECharts
-                option={chartOption}
-                style={{ height: "400px" }}
-                notMerge={true}
-              />
-            </Card>
+            <Col span={24}>
+              <Card title="睡眠阶段时间">
+                <ReactECharts
+                  option={stagesChartOption}
+                  style={{ height: "300px" }}
+                />
+              </Card>
+            </Col>
 
-            <Table
-              columns={columns}
-              dataSource={analysisData}
-              rowKey="date"
-              loading={loading}
-              pagination={false}
-            />
-          </>
+            <Col span={24}>
+              <Card title="入睡时间分布">
+                <ReactECharts
+                  option={sleepTimeScatterOption}
+                  style={{ height: "300px" }}
+                />
+              </Card>
+            </Col>
+
+            <Col span={24}>
+              <Card title="起床时间分布">
+                <ReactECharts
+                  option={wakeTimeScatterOption}
+                  style={{ height: "300px" }}
+                />
+              </Card>
+            </Col>
+
+            <Col span={24}>
+              <Card title="起床时间范围">
+                <Row justify="space-around" align="middle">
+                  <Col>
+                    <div style={{ textAlign: "center" }}>
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          color: "#faad14",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        最早起床时间
+                      </div>
+                      <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+                        {wakeTimeRange.earliest}
+                      </div>
+                    </div>
+                  </Col>
+                  <Col>
+                    <div style={{ textAlign: "center" }}>
+                      <div
+                        style={{
+                          fontSize: "16px",
+                          color: "#52c41a",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        最晚起床时间
+                      </div>
+                      <div style={{ fontSize: "24px", fontWeight: "bold" }}>
+                        {wakeTimeRange.latest}
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+          </Row>
         )}
       </Card>
     </div>
