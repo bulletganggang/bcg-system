@@ -19,3 +19,53 @@
     }
   }
 }
+
+.recordCard {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  &:hover {
+    box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .timestamp {
+    color: #1890ff;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .dataRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .heartRate,
+    .warning {
+      .label {
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.65);
+        margin-right: 8px;
+      }
+
+      .value {
+        font-size: 16px;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+:global {
+  .ant-list-item {
+    padding: 0;
+    margin-bottom: 16px;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .ant-card-body {
+    padding: 16px;
+  }
+}

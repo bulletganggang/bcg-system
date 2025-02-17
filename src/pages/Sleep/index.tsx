@@ -4,6 +4,7 @@ import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 import type { DatePickerProps } from "antd/es/date-picker";
 import styles from "./style.module.scss";
+import { roundUp } from "@/utils/math";
 
 interface SleepData {
   date: string;
@@ -174,9 +175,7 @@ const Sleep: React.FC = () => {
     },
     xAxis: {
       type: "value",
-      max:
-        mockSleepData.activityData.inactiveTime +
-        mockSleepData.activityData.activeTime,
+      max: roundUp(mockSleepData.activityData.inactiveTime, 100),
     },
     yAxis: {
       type: "category",
