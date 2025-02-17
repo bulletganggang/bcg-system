@@ -18,7 +18,6 @@ const Sleep = React.lazy(() => import("./pages/Sleep"));
 const Analysis = React.lazy(() => import("./pages/Analysis"));
 const History = React.lazy(() => import("./pages/History"));
 const Settings = React.lazy(() => import("./pages/Settings"));
-const Monitor = React.lazy(() => import("./pages/Monitor"));
 const Login = React.lazy(() => import("./pages/Login"));
 
 // 路由守卫组件
@@ -56,7 +55,6 @@ const App: React.FC = () => {
             <Route path="sleep" element={<Sleep />} />
             <Route path="analysis" element={<Analysis />} />
             <Route path="history" element={<History />} />
-            <Route path="monitor" element={<Monitor />} />
             <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>

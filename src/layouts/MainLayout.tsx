@@ -3,13 +3,12 @@ import { Layout, Menu, theme, Avatar, Dropdown } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
-  LineChartOutlined,
   SettingOutlined,
   HistoryOutlined,
-  DashboardOutlined,
   BulbOutlined,
   RestOutlined,
   LogoutOutlined,
+  AreaChartOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
 import { toggleTheme } from "../store/slices/configSlice";
@@ -74,18 +73,13 @@ const MainLayout: React.FC = () => {
     },
     {
       key: "/analysis",
-      icon: <LineChartOutlined />,
+      icon: <AreaChartOutlined />,
       label: "数据分析",
     },
     {
       key: "/history",
       icon: <HistoryOutlined />,
       label: "历史记录",
-    },
-    {
-      key: "/monitor",
-      icon: <DashboardOutlined />,
-      label: "实时监测",
     },
     {
       key: "/settings",
@@ -145,7 +139,7 @@ const MainLayout: React.FC = () => {
         <Sider
           theme={themeMode}
           breakpoint="lg"
-          collapsedWidth="0"
+          collapsed={false}
           className={styles.sider}
         >
           <div className={styles.siderContent}>

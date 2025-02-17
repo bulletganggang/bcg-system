@@ -75,64 +75,54 @@ export interface ApiResponse<T> {
 }
 
 /**
+ * 用户信息接口
+ */
+export interface UserInfo {
+  id: string;
+  username: string;
+  email: string;
+  avatar?: string;
+}
+
+/**
  * 睡眠数据接口
  */
 export interface SleepData {
-  /** 日期 */
+  id: string;
+  userId: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  quality: number;
+  stages: SleepStage[];
+}
+
+/**
+ * 睡眠阶段接口
+ */
+export interface SleepStage {
+  stage: "awake" | "light" | "deep" | "rem";
+  duration: number;
+  startTime: string;
+  endTime: string;
+}
+
+/**
+ * 分析数据接口
+ */
+export interface AnalysisData {
   date: string;
-  /** 入睡时间 */
-  sleepTime: string;
-  /** 醒来时间 */
-  wakeTime: string;
-  /** 总睡眠时长 */
-  totalSleepTime: string;
-  /** 睡眠评分 */
-  sleepScore: number;
-  /** 睡眠结构 */
-  sleepStructure: {
-    /** 浅睡时长(分钟) */
-    lightSleep: number;
-    /** 深睡时长(分钟) */
-    deepSleep: number;
-    /** REM睡眠时长(分钟) */
-    remSleep: number;
-    /** 清醒时长(分钟) */
-    awake: number;
-  };
-  /** 睡眠阶段 */
-  sleepStages: Array<{
-    /** 时间点 */
-    time: string;
-    /** 睡眠阶段 */
-    stage: "rem" | "light" | "deep" | "awake";
-  }>;
-  /** 呼吸频率 */
-  breathingRate: {
-    /** 最大值 */
-    max: number;
-    /** 平均值 */
-    avg: number;
-    /** 最小值 */
-    min: number;
-  };
-  /** 心率 */
-  heartRate: {
-    /** 最大值 */
-    max: number;
-    /** 平均值 */
-    avg: number;
-    /** 最小值 */
-    min: number;
-  };
-  /** 体动数据 */
-  activityData: {
-    /** 不活跃时长(分钟) */
-    inactiveTime: number;
-    /** 活动时长(分钟) */
-    activeTime: number;
-    /** 体位改变时长(分钟) */
-    positionChangeTime: number;
-    /** 身体变动时长(分钟) */
-    bodyMovementTime: number;
-  };
+  sleepQuality: number;
+  sleepDuration: number;
+  deepSleepPercentage: number;
+  remSleepPercentage: number;
+}
+
+/**
+ * 配置选项接口
+ */
+export interface ConfigOptions {
+  theme: "light" | "dark";
+  language: "zh" | "en";
+  notifications: boolean;
 }
