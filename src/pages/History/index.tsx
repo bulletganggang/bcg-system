@@ -5,6 +5,7 @@ import ReactECharts from "echarts-for-react";
 import { useChartConfig } from "../../hooks/useChartConfig";
 import type { DatePickerProps } from "antd/es/date-picker";
 import dayjs from "dayjs";
+import styles from "./style.module.scss";
 
 interface HistoryRecord {
   id: string;
@@ -151,7 +152,7 @@ const History: React.FC = () => {
   return (
     <div>
       <Card title="历史记录查询">
-        <Space style={{ marginBottom: 16 }}>
+        <Space className={styles.searchSection}>
           <DatePicker
             onChange={handleDateChange}
             disabledDate={(current) => current && current.isAfter(dayjs())}
@@ -167,12 +168,14 @@ const History: React.FC = () => {
 
         {historyData.length > 0 && (
           <>
-            <Card type="inner" title="历史趋势图" style={{ marginBottom: 16 }}>
-              <ReactECharts
-                option={chartOption}
-                style={{ height: "400px" }}
-                notMerge={true}
-              />
+            <Card type="inner" title="历史趋势图" className={styles.chartCard}>
+              <div className={styles.chart}>
+                <ReactECharts
+                  option={chartOption}
+                  style={{ height: "100%" }}
+                  notMerge={true}
+                />
+              </div>
             </Card>
 
             <Table
@@ -181,6 +184,7 @@ const History: React.FC = () => {
               rowKey="id"
               loading={loading}
               pagination={false}
+              className={styles.table}
             />
           </>
         )}

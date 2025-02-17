@@ -1,0 +1,89 @@
+.header {
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1;
+
+  .title {
+    margin: 0;
+    font-size: 1.5em;
+  }
+
+  .rightContent {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .themeIcon {
+      font-size: 20px;
+      cursor: pointer;
+    }
+  }
+}
+
+.sider {
+  overflow: auto;
+  height: calc(100vh - 64px);
+  position: fixed;
+  left: 0;
+  top: 64px;
+  bottom: 0;
+
+  .siderContent {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+
+    .menu {
+      flex: 1;
+      border-right: 0;
+    }
+
+    .userSection {
+      padding: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+
+      .userInfo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+
+        .username {
+          font-size: 14px;
+          flex: 1;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+
+          &.dark {
+            color: rgba(255, 255, 255, 0.85);
+          }
+
+          &.light {
+            color: rgba(0, 0, 0, 0.85);
+          }
+        }
+      }
+    }
+  }
+}
+
+.content {
+  margin-left: 200px;
+  transition: all 0.2s;
+
+  .contentInner {
+    margin: 24px 16px 0;
+    overflow: initial;
+
+    .contentBox {
+      padding: 24px;
+      min-height: 360px;
+    }
+  }
+}

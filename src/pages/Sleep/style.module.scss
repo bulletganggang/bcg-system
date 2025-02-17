@@ -1,0 +1,60 @@
+.sleepCard {
+  .header {
+    margin-bottom: 16px;
+
+    .timeRange {
+      font-size: 18px;
+      margin-bottom: 16px;
+    }
+  }
+
+  .statsCard {
+    margin-bottom: 16px;
+
+    .title {
+      font-size: 16px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+  }
+
+  .chartCard {
+    margin-bottom: 16px;
+
+    .chart {
+      height: 300px;
+    }
+  }
+
+  .rateCard {
+    .rateTitle {
+      font-size: 16px;
+      font-weight: bold;
+      color: rgba(0, 0, 0, 0.85);
+      margin-bottom: 16px;
+    }
+
+    .rateValue {
+      &.max {
+        color: #cf1322;
+      }
+      &.avg {
+        color: #3f8600;
+      }
+      &.min {
+        color: #096dd9;
+      }
+    }
+  }
+
+  .summaryCard {
+    p {
+      margin-bottom: 8px;
+      line-height: 1.5;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+}

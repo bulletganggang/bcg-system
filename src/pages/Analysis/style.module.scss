@@ -1,0 +1,29 @@
+.analysisCard {
+  margin-bottom: 16px;
+
+  .dateSelector {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 16px;
+  }
+
+  .chartCard {
+    margin-bottom: 16px;
+
+    .chart {
+      height: 300px;
+    }
+  }
+
+  .statsCard {
+    .statsValue {
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .statsLabel {
+      font-size: 14px;
+      color: rgba(0, 0, 0, 0.45);
+    }
+  }
+}

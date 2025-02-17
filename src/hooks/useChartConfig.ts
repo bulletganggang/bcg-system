@@ -30,7 +30,6 @@ export function useChartConfig({
   const chartConfig = useSelector(
     (state: RootState) => state.config.chartConfig
   );
-  const userConfig = useSelector((state: RootState) => state.config.userConfig);
 
   // 默认配置
   const defaultConfig: ChartConfig = {
@@ -73,15 +72,15 @@ export function useChartConfig({
       xAxis: {
         type: "time",
         splitLine: {
-          show: userConfig.showGrid,
+          show: true,
         },
       },
       yAxis: {
         type: "value",
         splitLine: {
-          show: userConfig.showGrid,
+          show: true,
         },
-        scale: userConfig.autoScale,
+        scale: true,
       },
       dataZoom: chartConfig.zoomable
         ? [
@@ -110,7 +109,7 @@ export function useChartConfig({
     };
 
     return baseOption;
-  }, [config.type, chartConfig, userConfig]);
+  }, [config.type, chartConfig]);
 
   return {
     config,

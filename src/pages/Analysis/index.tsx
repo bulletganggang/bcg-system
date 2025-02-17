@@ -3,6 +3,7 @@ import { Card, Row, Col, Select, DatePicker, Space } from "antd";
 import type { DatePickerProps } from "antd/es/date-picker";
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
+import styles from "./style.module.scss";
 
 type ReportType = "weekly" | "monthly";
 
@@ -128,6 +129,7 @@ const Analysis: React.FC = () => {
       data: analysisData.map((item) => item.date),
       axisLabel: {
         interval: 0,
+        rotate: 30,
       },
     },
     yAxis: {
@@ -163,6 +165,7 @@ const Analysis: React.FC = () => {
       data: analysisData.map((item) => item.date),
       axisLabel: {
         interval: 0,
+        rotate: 30,
       },
     },
     yAxis: {
@@ -325,8 +328,8 @@ const Analysis: React.FC = () => {
 
   return (
     <div>
-      <Card title="数据分析">
-        <Space style={{ marginBottom: 16 }}>
+      <Card title="数据分析" className={styles.analysisCard}>
+        <Space className={styles.dateSelector}>
           <Select
             value={analysisType}
             onChange={handleAnalysisTypeChange}
@@ -348,83 +351,52 @@ const Analysis: React.FC = () => {
         {analysisData.length > 0 && (
           <Row gutter={[16, 16]}>
             <Col span={24}>
-              <Card title="睡眠质量评分">
+              <Card title="睡眠质量评分" className={styles.chartCard}>
                 <Row gutter={[16, 16]}>
                   <Col span={24}>
                     <div
                       style={{
-                        marginBottom: "16px",
                         display: "flex",
                         gap: "24px",
+                        marginBottom: "16px",
                       }}
                     >
-                      <div>
+                      <div className={styles.statsCard}>
                         <div
-                          style={{
-                            fontSize: "16px",
-                            color: "#cf1322",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          最大值
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "24px",
-                            fontWeight: "bold",
-                            color: "#cf1322",
-                          }}
+                          className={styles.statsValue}
+                          style={{ color: "#cf1322" }}
                         >
                           {sleepScoreStats.max}
                         </div>
+                        <div className={styles.statsLabel}>最大值</div>
                       </div>
-                      <div>
+                      <div className={styles.statsCard}>
                         <div
-                          style={{
-                            fontSize: "16px",
-                            color: "#faad14",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          平均值
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "24px",
-                            fontWeight: "bold",
-                            color: "#faad14",
-                          }}
+                          className={styles.statsValue}
+                          style={{ color: "#faad14" }}
                         >
                           {sleepScoreStats.avg}
                         </div>
+                        <div className={styles.statsLabel}>平均值</div>
                       </div>
-                      <div>
+                      <div className={styles.statsCard}>
                         <div
-                          style={{
-                            fontSize: "16px",
-                            color: "#52c41a",
-                            marginBottom: "4px",
-                          }}
-                        >
-                          最小值
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "24px",
-                            fontWeight: "bold",
-                            color: "#52c41a",
-                          }}
+                          className={styles.statsValue}
+                          style={{ color: "#52c41a" }}
                         >
                           {sleepScoreStats.min}
                         </div>
+                        <div className={styles.statsLabel}>最小值</div>
                       </div>
                     </div>
                   </Col>
                   <Col span={24}>
-                    <ReactECharts
-                      option={scoreChartOption}
-                      style={{ height: "300px" }}
-                    />
+                    <div className={styles.chart}>
+                      <ReactECharts
+                        option={scoreChartOption}
+                        style={{ height: "100%" }}
+                      />
+                    </div>
                   </Col>
                 </Row>
               </Card>

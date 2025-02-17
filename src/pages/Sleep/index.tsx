@@ -3,6 +3,7 @@ import { Card, Row, Col, Statistic, DatePicker } from "antd";
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 import type { DatePickerProps } from "antd/es/date-picker";
+import styles from "./style.module.scss";
 
 interface SleepData {
   date: string;
@@ -217,29 +218,20 @@ const Sleep: React.FC = () => {
             disabledDate={(current) => current && current.isAfter(dayjs())}
           />
         }
+        className={styles.sleepCard}
       >
         <Row gutter={[16, 16]}>
           <Col span={24}>
-            <Card>
-              <h3 style={{ fontSize: "18px", marginBottom: "16px" }}>
+            <Card className={styles.header}>
+              <h3 className={styles.timeRange}>
                 夜间睡眠时长 {mockSleepData.sleepTime} ~{" "}
                 {mockSleepData.wakeTime}
               </h3>
               <Row gutter={16}>
                 <Col span={12}>
-                  <Card>
+                  <Card className={styles.statsCard}>
+                    <div className={styles.title}>睡眠质量评分</div>
                     <Statistic
-                      title={
-                        <div
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: "bold",
-                            color: "#1890ff",
-                          }}
-                        >
-                          睡眠质量评分
-                        </div>
-                      }
                       value={mockSleepData.sleepScore}
                       suffix="/100"
                       valueStyle={{ color: "#1890ff", fontSize: "24px" }}
@@ -247,19 +239,9 @@ const Sleep: React.FC = () => {
                   </Card>
                 </Col>
                 <Col span={12}>
-                  <Card>
+                  <Card className={styles.statsCard}>
+                    <div className={styles.title}>总睡眠时长</div>
                     <Statistic
-                      title={
-                        <div
-                          style={{
-                            fontSize: "16px",
-                            fontWeight: "bold",
-                            color: "#52c41a",
-                          }}
-                        >
-                          总睡眠时长
-                        </div>
-                      }
                       value={mockSleepData.totalSleepTime}
                       valueStyle={{ color: "#52c41a", fontSize: "24px" }}
                     />
@@ -270,72 +252,52 @@ const Sleep: React.FC = () => {
           </Col>
 
           <Col span={12}>
-            <Card title="睡眠结构">
-              <ReactECharts option={pieOption} style={{ height: "300px" }} />
+            <Card title="睡眠结构" className={styles.chartCard}>
+              <div className={styles.chart}>
+                <ReactECharts option={pieOption} style={{ height: "100%" }} />
+              </div>
             </Card>
           </Col>
 
           <Col span={12}>
-            <Card title="睡眠阶段">
-              <ReactECharts option={stagesOption} style={{ height: "300px" }} />
+            <Card title="睡眠阶段" className={styles.chartCard}>
+              <div className={styles.chart}>
+                <ReactECharts
+                  option={stagesOption}
+                  style={{ height: "100%" }}
+                />
+              </div>
             </Card>
           </Col>
 
           <Col span={24}>
-            <Card title="呼吸频率(次/分钟)">
+            <Card title="呼吸频率(次/分钟)" className={styles.rateCard}>
               <Row gutter={16}>
                 <Col span={8}>
+                  <div className={styles.rateTitle}>最大</div>
                   <Statistic
-                    title={
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          color: "#cf1322",
-                        }}
-                      >
-                        最大
-                      </div>
-                    }
                     value={mockSleepData.breathingRate.max}
                     suffix="bpm"
                     valueStyle={{ color: "#cf1322" }}
+                    className={styles.rateValue}
                   />
                 </Col>
                 <Col span={8}>
+                  <div className={styles.rateTitle}>平均</div>
                   <Statistic
-                    title={
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          color: "#3f8600",
-                        }}
-                      >
-                        平均
-                      </div>
-                    }
                     value={mockSleepData.breathingRate.avg}
                     suffix="bpm"
                     valueStyle={{ color: "#3f8600" }}
+                    className={styles.rateValue}
                   />
                 </Col>
                 <Col span={8}>
+                  <div className={styles.rateTitle}>最小</div>
                   <Statistic
-                    title={
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          color: "#096dd9",
-                        }}
-                      >
-                        最小
-                      </div>
-                    }
                     value={mockSleepData.breathingRate.min}
                     suffix="bpm"
                     valueStyle={{ color: "#096dd9" }}
+                    className={styles.rateValue}
                   />
                 </Col>
               </Row>
@@ -343,60 +305,33 @@ const Sleep: React.FC = () => {
           </Col>
 
           <Col span={24}>
-            <Card title="心率(次/分钟)">
+            <Card title="心率(次/分钟)" className={styles.rateCard}>
               <Row gutter={16}>
                 <Col span={8}>
+                  <div className={styles.rateTitle}>最大</div>
                   <Statistic
-                    title={
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          color: "#cf1322",
-                        }}
-                      >
-                        最大
-                      </div>
-                    }
                     value={mockSleepData.heartRate.max}
                     suffix="bpm"
                     valueStyle={{ color: "#cf1322" }}
+                    className={styles.rateValue}
                   />
                 </Col>
                 <Col span={8}>
+                  <div className={styles.rateTitle}>平均</div>
                   <Statistic
-                    title={
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          color: "#3f8600",
-                        }}
-                      >
-                        平均
-                      </div>
-                    }
                     value={mockSleepData.heartRate.avg}
                     suffix="bpm"
                     valueStyle={{ color: "#3f8600" }}
+                    className={styles.rateValue}
                   />
                 </Col>
                 <Col span={8}>
+                  <div className={styles.rateTitle}>最小</div>
                   <Statistic
-                    title={
-                      <div
-                        style={{
-                          fontSize: "16px",
-                          fontWeight: "bold",
-                          color: "#096dd9",
-                        }}
-                      >
-                        最小
-                      </div>
-                    }
                     value={mockSleepData.heartRate.min}
                     suffix="bpm"
                     valueStyle={{ color: "#096dd9" }}
+                    className={styles.rateValue}
                   />
                 </Col>
               </Row>
@@ -404,16 +339,18 @@ const Sleep: React.FC = () => {
           </Col>
 
           <Col span={24}>
-            <Card title="体动检测">
-              <ReactECharts
-                option={activityOption}
-                style={{ height: "300px" }}
-              />
+            <Card title="体动检测" className={styles.chartCard}>
+              <div className={styles.chart}>
+                <ReactECharts
+                  option={activityOption}
+                  style={{ height: "100%" }}
+                />
+              </div>
             </Card>
           </Col>
 
           <Col span={24}>
-            <Card title="总结与建议">
+            <Card title="总结与建议" className={styles.summaryCard}>
               <p>
                 您的总睡眠时长为{mockSleepData.totalSleepTime}
                 ，符合成年人推荐的7-9小时标准。继续保持良好的作息习惯。

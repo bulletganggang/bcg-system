@@ -1,0 +1,26 @@
+.loginContainer {
+  min-height: 100vh;
+  background: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.loginCard {
+  width: 100%;
+
+  .title {
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  .verifyCodeButton {
+    width: 100%;
+  }
+
+  .loginButton {
+    width: 100%;
+  }
+}

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { LockOutlined, MobileOutlined } from "@ant-design/icons";
 import type { TabsProps } from "antd";
 import request, { RequestParams } from "@/utils/request";
+import styles from "./style.module.scss";
 
 // 登录参数接口
 interface LoginParams extends RequestParams {
@@ -141,6 +142,7 @@ const Login: React.FC = () => {
                   disabled={countdown > 0}
                   onClick={handleSendVerifyCode}
                   loading={loading}
+                  className={styles.verifyCodeButton}
                 >
                   {countdown > 0 ? `${countdown}秒后重试` : "获取验证码"}
                 </Button>
@@ -153,8 +155,8 @@ const Login: React.FC = () => {
               type="primary"
               htmlType="submit"
               size="large"
-              block
               loading={loading}
+              className={styles.loginButton}
             >
               登录
             </Button>
@@ -205,8 +207,8 @@ const Login: React.FC = () => {
               type="primary"
               htmlType="submit"
               size="large"
-              block
               loading={loading}
+              className={styles.loginButton}
             >
               登录
             </Button>
@@ -217,23 +219,10 @@ const Login: React.FC = () => {
   ];
 
   return (
-    <Row
-      justify="center"
-      align="middle"
-      style={{ minHeight: "100vh", background: "#f0f2f5" }}
-    >
+    <div className={styles.loginContainer}>
       <Col xs={22} sm={16} md={12} lg={8} xl={6}>
-        <Card>
-          <h2
-            style={{
-              textAlign: "center",
-              marginBottom: "24px",
-              fontSize: "24px",
-              fontWeight: "bold",
-            }}
-          >
-            人体特征信号采集与处理系统
-          </h2>
+        <Card className={styles.loginCard}>
+          <h2 className={styles.title}>人体特征信号采集与处理系统</h2>
           <Tabs
             defaultActiveKey="verify"
             items={items}
@@ -243,7 +232,7 @@ const Login: React.FC = () => {
           />
         </Card>
       </Col>
-    </Row>
+    </div>
   );
 };
 

@@ -1,0 +1,21 @@
+.searchSection {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 16px;
+}
+
+.chartCard {
+  margin-bottom: 16px;
+
+  .chart {
+    height: 400px;
+  }
+}
+
+.table {
+  :global {
+    .ant-table-thead > tr > th {
+      white-space: nowrap;
+    }
+  }
+}

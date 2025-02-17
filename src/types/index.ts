@@ -25,17 +25,15 @@ export interface HealthStatus {
 }
 
 /**
- * 用户配置接口
+ * 图表配置接口
  */
-export interface UserConfig {
-  /** 采样率 */
-  sampleRate: number;
-  /** 显示时间范围(秒) */
-  timeRange: number;
-  /** 是否显示网格 */
-  showGrid: boolean;
-  /** 是否自动缩放 */
-  autoScale: boolean;
+export interface ChartConfig {
+  /** 图表类型 */
+  type: "line" | "bar" | "scatter";
+  /** 是否显示标签 */
+  showLabel: boolean;
+  /** 是否允许缩放 */
+  zoomable: boolean;
 }
 
 /**
@@ -62,18 +60,6 @@ export interface WebSocketMessage {
   data: BCGData | HealthStatus | string;
   /** 时间戳 */
   timestamp: number;
-}
-
-/**
- * 图表配置接口
- */
-export interface ChartConfig {
-  /** 图表类型 */
-  type: "line" | "bar" | "scatter";
-  /** 是否显示标签 */
-  showLabel: boolean;
-  /** 是否允许缩放 */
-  zoomable: boolean;
 }
 
 /**

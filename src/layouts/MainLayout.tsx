@@ -13,6 +13,8 @@ import {
 } from "@ant-design/icons";
 import type { RootState } from "../store";
 import { toggleTheme } from "../store/slices/configSlice";
+import styles from "./style.module.scss";
+import classNames from "classnames";
 // import request from "@/utils/request";
 
 const { Header, Sider, Content } = Layout;
@@ -121,66 +123,63 @@ const MainLayout: React.FC = () => {
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Header
-        style={{
-          padding: "0 24px",
-          background: colorBgContainer,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          position: "fixed",
-          width: "100%",
-          top: 0,
-          zIndex: 1,
-          // boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
-        }}
+        className={styles.header}
+        style={{ background: colorBgContainer }}
       >
         <h1
+          className={styles.title}
           style={{
-            margin: 0,
-            fontSize: "1.5em",
             color: themeMode === "dark" ? "#fff" : "rgba(0, 0, 0, 0.85)",
           }}
         >
           人体特征信号采集与处理系统
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          {userInfo && (
-            <Dropdown
-              menu={userMenu}
-              placement="bottom"
-              align={{ offset: [0, 4] }}
-            >
-              <Avatar
-                src={userInfo.avatar}
-                style={{ cursor: "pointer" }}
-                size="large"
-              >
-                {!userInfo.avatar && userInfo.name?.[0]}
-              </Avatar>
-            </Dropdown>
-          )}
+        <div className={styles.rightContent}>
           <BulbOutlined
-            style={{ fontSize: "20px", cursor: "pointer" }}
+            className={styles.themeIcon}
             onClick={() => dispatch(toggleTheme())}
           />
         </div>
       </Header>
-      <Layout style={{ marginTop: 64 }}>
-        <Sider theme={themeMode} breakpoint="lg" collapsedWidth="0">
-          <Menu
-            theme={themeMode}
-            mode="inline"
-            selectedKeys={[getSelectedKey()]}
-            items={menuItems}
-            onClick={({ key }) => navigate(key)}
-          />
+      <Layout style={{ marginTop: 56 }}>
+        <Sider
+          theme={themeMode}
+          breakpoint="lg"
+          collapsedWidth="0"
+          className={styles.sider}
+        >
+          <div className={styles.siderContent}>
+            <Menu
+              theme={themeMode}
+              mode="inline"
+              selectedKeys={[getSelectedKey()]}
+              items={menuItems}
+              onClick={({ key }) => navigate(key)}
+              className={styles.menu}
+            />
+            {userInfo && (
+              <div className={styles.userSection}>
+                <Dropdown menu={userMenu} placement="topRight">
+                  <div className={styles.userInfo}>
+                    <Avatar src={userInfo.avatar} size="large">
+                      {!userInfo.avatar && userInfo.name?.[0]}
+                    </Avatar>
+                    <span
+                      className={classNames(styles.username, styles[themeMode])}
+                    >
+                      {userInfo.name}
+                    </span>
+                  </div>
+                </Dropdown>
+              </div>
+            )}
+          </div>
         </Sider>
-        <Layout>
-          <Content style={{ margin: "24px 16px 0" }}>
+        <Layout className={styles.content}>
+          <Content className={styles.contentInner}>
             <div
+              className={styles.contentBox}
               style={{
-                padding: 24,
-                minHeight: 360,
                 background: colorBgContainer,
                 borderRadius: borderRadiusLG,
               }}
