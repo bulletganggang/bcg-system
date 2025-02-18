@@ -1,5 +1,7 @@
 import React from "react";
 import { Card, List } from "antd";
+import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs";
 import styles from "./style.module.scss";
 
 interface HistoryRecord {
@@ -9,6 +11,8 @@ interface HistoryRecord {
 }
 
 const History: React.FC = () => {
+  const navigate = useNavigate();
+
   // 模拟历史数据
   const mockHistoryData: HistoryRecord[] = [
     {
@@ -48,6 +52,14 @@ const History: React.FC = () => {
     },
   ];
 
+  // 处理记录点击
+  const handleRecordClick = (timestamp: string) => {
+    // 从时间戳中提取日期（YYYY-MM-DD格式）
+    const date = dayjs(timestamp).format("YYYY-MM-DD");
+    // 跳转到睡眠数据页面，并携带日期参数
+    navigate(`/sleep?date=${date}`);
+  };
+
   return (
     <div>
       <Card title="历史记录">
@@ -55,7 +67,11 @@ const History: React.FC = () => {
           dataSource={mockHistoryData}
           renderItem={(item) => (
             <List.Item>
-              <Card className={styles.recordCard} style={{ width: "100%" }}>
+              <Card
+                className={styles.recordCard}
+                onClick={() => handleRecordClick(item.timestamp)}
+                hoverable
+              >
                 <div className={styles.timestamp}>{item.timestamp}</div>
                 <div className={styles.dataRow}>
                   <div className={styles.heartRate}>
