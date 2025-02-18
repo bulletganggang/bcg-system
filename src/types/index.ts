@@ -117,12 +117,3 @@ export interface AnalysisData {
   deepSleepPercentage: number;
   remSleepPercentage: number;
 }
-
-/**
- * 配置选项接口
- */
-export interface ConfigOptions {
-  theme: "light" | "dark";
-  language: "zh" | "en";
-  notifications: boolean;
-}

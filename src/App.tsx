@@ -17,8 +17,8 @@ import React from "react";
 const Sleep = React.lazy(() => import("./pages/Sleep"));
 const Analysis = React.lazy(() => import("./pages/Analysis"));
 const History = React.lazy(() => import("./pages/History"));
-const Settings = React.lazy(() => import("./pages/Settings"));
 const Login = React.lazy(() => import("./pages/Login"));
+const Error = React.lazy(() => import("./pages/Error"));
 
 // 路由守卫组件
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -55,8 +55,9 @@ const App: React.FC = () => {
             <Route path="sleep" element={<Sleep />} />
             <Route path="analysis" element={<Analysis />} />
             <Route path="history" element={<History />} />
-            <Route path="settings" element={<Settings />} />
           </Route>
+          {/* 错误页面路由 */}
+          <Route path="*" element={<Error />} />
         </Routes>
       </Router>
     </ConfigProvider>

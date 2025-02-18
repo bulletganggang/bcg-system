@@ -1,0 +1,18 @@
+.errorCard {
+  margin: 32px auto;
+  max-width: 800px;
+
+  .subTitle {
+    text-align: center;
+    font-size: 16px;
+
+    p {
+      margin: 8px 0;
+
+      &:last-child {
+        color: #1890ff;
+        font-size: 14px;
+      }
+    }
+  }
+}

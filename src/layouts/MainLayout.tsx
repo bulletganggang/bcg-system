@@ -3,7 +3,6 @@ import { Layout, Menu, theme, Avatar, Dropdown } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
-  SettingOutlined,
   HistoryOutlined,
   BulbOutlined,
   RestOutlined,
@@ -80,11 +79,6 @@ const MainLayout: React.FC = () => {
       key: "/history",
       icon: <HistoryOutlined />,
       label: "历史记录",
-    },
-    {
-      key: "/settings",
-      icon: <SettingOutlined />,
-      label: "系统设置",
     },
   ];
 
