@@ -5,12 +5,10 @@ import {
   Navigate,
 } from "react-router-dom";
 import { Provider } from "react-redux";
-import { ConfigProvider, theme } from "antd";
-import { useSelector } from "react-redux";
+import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { store } from "./store";
 import MainLayout from "./layouts/MainLayout";
-import type { RootState } from "./store";
 import React from "react";
 
 // 懒加载页面组件
@@ -19,6 +17,7 @@ const Analysis = React.lazy(() => import("./pages/Analysis"));
 const History = React.lazy(() => import("./pages/History"));
 const Login = React.lazy(() => import("./pages/Login"));
 const Error = React.lazy(() => import("./pages/Error"));
+const Profile = React.lazy(() => import("./pages/Profile"));
 
 // 路由守卫组件
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -29,16 +28,8 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
 };
 
 const App: React.FC = () => {
-  const themeMode = useSelector((state: RootState) => state.config.theme);
-
   return (
-    <ConfigProvider
-      locale={zhCN}
-      theme={{
-        algorithm:
-          themeMode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
-      }}
-    >
+    <ConfigProvider locale={zhCN}>
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
@@ -55,6 +46,7 @@ const App: React.FC = () => {
             <Route path="sleep" element={<Sleep />} />
             <Route path="analysis" element={<Analysis />} />
             <Route path="history" element={<History />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
           {/* 错误页面路由 */}
           <Route path="*" element={<Error />} />

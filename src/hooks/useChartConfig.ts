@@ -1,8 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import type { ChartConfig } from "../types";
 import type { EChartsOption } from "echarts";
-import { useSelector } from "react-redux";
-import type { RootState } from "../store";
 
 interface UseChartConfigProps {
   /** 初始配置 */
@@ -26,11 +24,6 @@ interface UseChartConfigReturn {
 export function useChartConfig({
   initialConfig,
 }: UseChartConfigProps = {}): UseChartConfigReturn {
-  // 从Redux获取配置
-  const chartConfig = useSelector(
-    (state: RootState) => state.config.chartConfig
-  );
-
   // 默认配置
   const defaultConfig: ChartConfig = {
     type: "line",
@@ -40,7 +33,6 @@ export function useChartConfig({
 
   const [config, setConfig] = useState<ChartConfig>({
     ...defaultConfig,
-    ...chartConfig,
     ...initialConfig,
   });
 
@@ -66,7 +58,7 @@ export function useChartConfig({
         trigger: "axis",
       },
       legend: {
-        show: chartConfig.showLabel,
+        show: config.showLabel,
         top: 10,
       },
       xAxis: {
@@ -82,7 +74,7 @@ export function useChartConfig({
         },
         scale: true,
       },
-      dataZoom: chartConfig.zoomable
+      dataZoom: config.zoomable
         ? [
             {
               type: "inside",
@@ -109,7 +101,7 @@ export function useChartConfig({
     };
 
     return baseOption;
-  }, [config.type, chartConfig]);
+  }, [config]);
 
   return {
     config,

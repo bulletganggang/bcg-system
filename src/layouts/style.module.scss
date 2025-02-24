@@ -12,17 +12,6 @@
     margin: 0;
     font-size: 1.5em;
   }
-
-  .rightContent {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-
-    .themeIcon {
-      font-size: 20px;
-      cursor: pointer;
-    }
-  }
 }
 
 .sider {
@@ -59,14 +48,7 @@
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
-
-          &.dark {
-            color: rgba(255, 255, 255, 0.85);
-          }
-
-          &.light {
-            color: rgba(0, 0, 0, 0.85);
-          }
+          color: rgba(0, 0, 0, 0.85);
         }
       }
     }

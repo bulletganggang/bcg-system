@@ -85,7 +85,7 @@ const Login: React.FC = () => {
       // message.success("登录成功");
 
       // 模拟登录成功
-      localStorage.setItem("userInfo", JSON.stringify({ name: values.phone }));
+      localStorage.setItem("userInfo", JSON.stringify({ phone: values.phone }));
       message.success("登录成功");
       navigate("/sleep");
     } catch (error) {

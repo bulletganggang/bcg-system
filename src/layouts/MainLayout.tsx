@@ -1,27 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Layout, Menu, theme, Avatar, Dropdown } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   HistoryOutlined,
-  BulbOutlined,
   RestOutlined,
   LogoutOutlined,
   AreaChartOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
-import { toggleTheme } from "../store/slices/configSlice";
+import { setUserBasicInfo } from "../store/slices/userSlice";
 import styles from "./style.module.scss";
-import classNames from "classnames";
 // import request from "@/utils/request";
 
 const { Header, Sider, Content } = Layout;
-
-// 用户信息接口
-interface UserInfo {
-  avatar?: string;
-  name: string;
-}
 
 /**
  * 主布局组件
@@ -30,8 +23,7 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const themeMode = useSelector((state: RootState) => state.config.theme);
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const { name, avatar } = useSelector((state: RootState) => state.user);
 
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -39,14 +31,22 @@ const MainLayout: React.FC = () => {
 
   // 获取用户信息
   useEffect(() => {
+    // TODO: 调用后端接口，获取用户信息
     const storedUserInfo = localStorage.getItem("userInfo");
     if (storedUserInfo) {
-      setUserInfo(JSON.parse(storedUserInfo));
+      const parsedUserInfo = JSON.parse(storedUserInfo);
+      // 将用户基本信息存储到Redux
+      dispatch(
+        setUserBasicInfo({
+          name: parsedUserInfo.name,
+          avatar: parsedUserInfo.avatar,
+        })
+      );
     } else {
       // 如果没有用户信息，重定向到登录页
       navigate("/login");
     }
-  }, [navigate]);
+  }, [navigate, dispatch]);
 
   // 处理退出登录
   const handleLogout = async () => {
@@ -56,6 +56,8 @@ const MainLayout: React.FC = () => {
 
       // 清除本地存储的用户信息
       localStorage.removeItem("userInfo");
+      // 重置用户信息
+      dispatch(setUserBasicInfo({ name: "", avatar: undefined }));
       // 跳转到登录页
       navigate("/login");
     } catch (error) {
@@ -79,6 +81,11 @@ const MainLayout: React.FC = () => {
       key: "/history",
       icon: <HistoryOutlined />,
       label: "历史记录",
+    },
+    {
+      key: "/profile",
+      icon: <UserOutlined />,
+      label: "个人中心",
     },
   ];
 
@@ -114,53 +121,35 @@ const MainLayout: React.FC = () => {
         className={styles.header}
         style={{ background: colorBgContainer }}
       >
-        <h1
-          className={styles.title}
-          style={{
-            color: themeMode === "dark" ? "#fff" : "rgba(0, 0, 0, 0.85)",
-          }}
-        >
-          人体特征信号采集与处理系统
-        </h1>
-        <div className={styles.rightContent}>
-          <BulbOutlined
-            className={styles.themeIcon}
-            onClick={() => dispatch(toggleTheme())}
-          />
-        </div>
+        <h1 className={styles.title}>人体特征信号采集与处理系统</h1>
       </Header>
       <Layout style={{ marginTop: 56 }}>
         <Sider
-          theme={themeMode}
+          theme="light"
           breakpoint="lg"
           collapsed={false}
           className={styles.sider}
         >
           <div className={styles.siderContent}>
             <Menu
-              theme={themeMode}
+              theme="light"
               mode="inline"
               selectedKeys={[getSelectedKey()]}
               items={menuItems}
               onClick={({ key }) => navigate(key)}
               className={styles.menu}
             />
-            {userInfo && (
-              <div className={styles.userSection}>
-                <Dropdown menu={userMenu} placement="topRight">
-                  <div className={styles.userInfo}>
-                    <Avatar src={userInfo.avatar} size="large">
-                      {!userInfo.avatar && userInfo.name?.[0]}
-                    </Avatar>
-                    <span
-                      className={classNames(styles.username, styles[themeMode])}
-                    >
-                      {userInfo.name}
-                    </span>
-                  </div>
-                </Dropdown>
-              </div>
-            )}
+            <div className={styles.userSection}>
+              <Dropdown menu={userMenu} placement="topRight">
+                <div
+                  className={styles.userInfo}
+                  onClick={() => navigate("/profile")}
+                >
+                  <Avatar src={avatar} size="large" />
+                  <span className={styles.username}>{name}</span>
+                </div>
+              </Dropdown>
+            </div>
           </div>
         </Sider>
         <Layout className={styles.content}>
