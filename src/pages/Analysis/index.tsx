@@ -26,20 +26,23 @@ interface EChartsTooltipParams {
 }
 
 const Analysis: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs | null>(null);
+  // 初始化为当前日期
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(dayjs());
   const [analysisType, setAnalysisType] = useState<ReportType>("weekly");
   const [analysisData, setAnalysisData] = useState<AnalysisData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
 
   // 处理日期选择变化
   const handleDateChange: DatePickerProps["onChange"] = (date) => {
-    setSelectedDate(date);
+    setSelectedDate(date || dayjs());
   };
 
   // 处理报告类型变化
   const handleAnalysisTypeChange = (value: ReportType) => {
     setAnalysisType(value);
-    setSelectedDate(null);
+    setSelectedDate(dayjs()); // 切换报告类型时重置为当前日期
     setAnalysisData([]);
+    setLoading(true);
   };
 
   // 加载分析数据
@@ -47,6 +50,7 @@ const Analysis: React.FC = () => {
     if (!selectedDate) return;
 
     try {
+      setLoading(true);
       let startDate: dayjs.Dayjs;
       let endDate: dayjs.Dayjs;
       const today = dayjs();
@@ -94,6 +98,8 @@ const Analysis: React.FC = () => {
       setAnalysisData(mockData);
     } catch (error) {
       console.error("加载分析数据失败:", error);
+    } finally {
+      setLoading(false);
     }
   }, [selectedDate, analysisType]);
 
@@ -328,7 +334,7 @@ const Analysis: React.FC = () => {
 
   return (
     <div>
-      <Card title="数据分析" className={styles.analysisCard}>
+      <Card title="数据分析" className={styles.analysisCard} loading={loading}>
         <Space className={styles.dateSelector}>
           <Select
             value={analysisType}
@@ -338,6 +344,7 @@ const Analysis: React.FC = () => {
               { label: "周报告", value: "weekly" },
               { label: "月报告", value: "monthly" },
             ]}
+            disabled={loading}
           />
           <DatePicker
             picker={analysisType === "weekly" ? "week" : "month"}
@@ -345,10 +352,11 @@ const Analysis: React.FC = () => {
             onChange={handleDateChange}
             disabledDate={(current) => current && current.isAfter(dayjs())}
             format={analysisType === "weekly" ? "YYYY-wo" : "YYYY-MM"}
+            disabled={loading}
           />
         </Space>
 
-        {analysisData.length > 0 && (
+        {!loading && analysisData.length > 0 && (
           <Row gutter={[16, 16]}>
             <Col span={24}>
               <Card title="睡眠质量评分" className={styles.chartCard}>
