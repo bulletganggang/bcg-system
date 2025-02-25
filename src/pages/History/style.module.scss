@@ -21,19 +21,20 @@
 }
 
 .recordCard {
-  margin-bottom: 16px;
-  border-radius: 12px;
-  transition: all 0.3s ease;
-  cursor: pointer;
   width: 100%;
+  margin-bottom: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+
   &:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
   .timestamp {
-    color: #1890ff;
     font-size: 16px;
-    margin-bottom: 12px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: rgba(0, 0, 0, 0.85);
   }
 
   .dataRow {
@@ -43,15 +44,51 @@
 
     .heartRate,
     .warning {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
       .label {
-        font-size: 14px;
-        color: rgba(0, 0, 0, 0.65);
-        margin-right: 8px;
+        color: rgba(0, 0, 0, 0.45);
       }
 
       .value {
-        font-size: 16px;
         font-weight: 500;
+      }
+    }
+  }
+}
+
+.pagination {
+  margin-top: 24px;
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0;
+
+  :global {
+    .ant-pagination-total-text {
+      margin-right: auto;
+    }
+  }
+}
+
+// 响应式布局
+@media screen and (max-width: 768px) {
+  .dataRow {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 8px;
+  }
+
+  .pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+
+    :global {
+      .ant-pagination-total-text {
+        margin-right: 0;
+        margin-bottom: 8px;
       }
     }
   }
