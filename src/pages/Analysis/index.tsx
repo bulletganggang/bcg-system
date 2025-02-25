@@ -1,8 +1,23 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Card, Row, Col, Select, DatePicker, Space } from "antd";
+import {
+  Card,
+  Row,
+  Col,
+  Select,
+  DatePicker,
+  Space,
+  Alert,
+  Statistic,
+} from "antd";
 import type { DatePickerProps } from "antd/es/date-picker";
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
+import {
+  HeartOutlined,
+  ClockCircleOutlined,
+  AlertOutlined,
+  CalendarOutlined,
+} from "@ant-design/icons";
 import styles from "./style.module.scss";
 
 type ReportType = "weekly" | "monthly";
@@ -25,12 +40,34 @@ interface EChartsTooltipParams {
   data: [string, string];
 }
 
+interface AnomalyStats {
+  heartRateAnomalies: number;
+  sleepDurationAnomalies: number;
+  sleepQualityAnomalies: number;
+  sleepPatternAnomalies: number;
+  totalRecords: number;
+}
+
+interface HealthAdvice {
+  type: "success" | "info" | "warning" | "error";
+  message: string;
+  description: string;
+}
+
 const Analysis: React.FC = () => {
   // 初始化为当前日期
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(dayjs());
   const [analysisType, setAnalysisType] = useState<ReportType>("weekly");
   const [analysisData, setAnalysisData] = useState<AnalysisData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [anomalyStats, setAnomalyStats] = useState<AnomalyStats>({
+    heartRateAnomalies: 0,
+    sleepDurationAnomalies: 0,
+    sleepQualityAnomalies: 0,
+    sleepPatternAnomalies: 0,
+    totalRecords: 0,
+  });
+  const [healthAdvice, setHealthAdvice] = useState<HealthAdvice[]>([]);
 
   // 处理日期选择变化
   const handleDateChange: DatePickerProps["onChange"] = (date) => {
@@ -332,6 +369,98 @@ const Analysis: React.FC = () => {
 
   const wakeTimeRange = getWakeTimeRange();
 
+  // 分析异常数据
+  const analyzeAnomalies = useCallback((data: AnalysisData[]) => {
+    let stats = {
+      heartRateAnomalies: 0,
+      sleepDurationAnomalies: 0,
+      sleepQualityAnomalies: 0,
+      sleepPatternAnomalies: 0,
+      totalRecords: data.length,
+    };
+
+    let advice: HealthAdvice[] = [];
+
+    // 计算平均睡眠时间和标准差
+    const avgSleepDuration =
+      data.reduce((sum, item) => {
+        const totalSleep =
+          item.sleepStages.lightSleep +
+          item.sleepStages.deepSleep +
+          item.sleepStages.remSleep;
+        return sum + totalSleep;
+      }, 0) / data.length;
+
+    data.forEach((item) => {
+      // 检查睡眠评分
+      if (item.sleepScore < 60) {
+        stats.sleepQualityAnomalies++;
+      }
+
+      // 检查总睡眠时长
+      const totalSleep =
+        item.sleepStages.lightSleep +
+        item.sleepStages.deepSleep +
+        item.sleepStages.remSleep;
+      if (totalSleep < 360 || totalSleep > 600) {
+        // 6-10小时为正常范围
+        stats.sleepDurationAnomalies++;
+      }
+
+      // 检查深睡眠比例
+      const deepSleepRatio = item.sleepStages.deepSleep / totalSleep;
+      if (deepSleepRatio < 0.2) {
+        // 深睡眠比例应该大于20%
+        stats.sleepQualityAnomalies++;
+      }
+
+      // 检查入睡时间规律性
+      const sleepHour = parseInt(item.sleepTime.split(":")[0]);
+      if (sleepHour < 21 || sleepHour > 23) {
+        stats.sleepPatternAnomalies++;
+      }
+    });
+
+    // 生成健康建议
+    if (stats.sleepQualityAnomalies > data.length * 0.3) {
+      advice.push({
+        type: "warning",
+        message: "睡眠质量提醒",
+        description:
+          "您的深睡眠比例偏低，建议：1. 保持规律的作息时间 2. 睡前避免剧烈运动 3. 创造安静舒适的睡眠环境",
+      });
+    }
+
+    if (stats.sleepDurationAnomalies > data.length * 0.3) {
+      const avgHours = Math.round(avgSleepDuration / 60);
+      advice.push({
+        type: "error",
+        message: "睡眠时长提醒",
+        description: `您的平均睡眠时长为${avgHours}小时，${
+          avgHours < 7 ? "睡眠时间不足" : "睡眠时间过长"
+        }。建议保持7-8小时的睡眠时间，有助于身体恢复和精力充沛。`,
+      });
+    }
+
+    if (stats.sleepPatternAnomalies > data.length * 0.3) {
+      advice.push({
+        type: "warning",
+        message: "作息规律提醒",
+        description:
+          "您的作息时间不够规律，建议：1. 制定固定的作息计划 2. 避免熬夜 3. 保持规律的运动习惯",
+      });
+    }
+    setAnomalyStats(stats);
+    setHealthAdvice(advice);
+  }, []);
+
+  // 在数据加载完成后进行异常分析
+  useEffect(() => {
+    if (analysisData.length > 0) {
+      analyzeAnomalies(analysisData);
+    }
+  }, [analysisData, analyzeAnomalies]);
+
   return (
     <div>
       <Card title="数据分析" className={styles.analysisCard} loading={loading}>
@@ -358,6 +487,84 @@ const Analysis: React.FC = () => {
 
         {!loading && analysisData.length > 0 && (
           <Row gutter={[16, 16]}>
+            {/* 异常数据统计卡片 */}
+            <Col span={24}>
+              <Card title="异常数据统计" className={styles.anomalyCard}>
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} sm={12} md={6}>
+                    <Statistic
+                      title="睡眠质量异常"
+                      value={anomalyStats.sleepQualityAnomalies}
+                      suffix={`/ ${anomalyStats.totalRecords}`}
+                      prefix={<HeartOutlined />}
+                      valueStyle={{ color: "#ff4d4f" }}
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <Statistic
+                      title="睡眠时长异常"
+                      value={anomalyStats.sleepDurationAnomalies}
+                      suffix={`/ ${anomalyStats.totalRecords}`}
+                      prefix={<ClockCircleOutlined />}
+                      valueStyle={{ color: "#faad14" }}
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <Statistic
+                      title="睡眠规律异常"
+                      value={anomalyStats.sleepPatternAnomalies}
+                      suffix={`/ ${anomalyStats.totalRecords}`}
+                      prefix={<CalendarOutlined />}
+                      valueStyle={{ color: "#1890ff" }}
+                    />
+                  </Col>
+                  <Col xs={24} sm={12} md={6}>
+                    <Statistic
+                      title="总异常次数"
+                      value={
+                        anomalyStats.sleepQualityAnomalies +
+                        anomalyStats.sleepDurationAnomalies +
+                        anomalyStats.sleepPatternAnomalies
+                      }
+                      suffix={`/ ${anomalyStats.totalRecords * 3}`}
+                      prefix={<AlertOutlined />}
+                      valueStyle={{
+                        color:
+                          anomalyStats.sleepQualityAnomalies > 0
+                            ? "#ff4d4f"
+                            : "#52c41a",
+                      }}
+                    />
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+
+            {/* 健康建议 */}
+            <Col span={24}>
+              <Card title="健康建议">
+                <Space direction="vertical" style={{ width: "100%" }}>
+                  {healthAdvice.map((advice, index) => (
+                    <Alert
+                      key={index}
+                      message={advice.message}
+                      description={advice.description}
+                      type={advice.type}
+                      showIcon
+                    />
+                  ))}
+                  {healthAdvice.length === 0 && (
+                    <Alert
+                      message="状态良好"
+                      description="您的睡眠状况良好，请继续保持！"
+                      type="success"
+                      showIcon
+                    />
+                  )}
+                </Space>
+              </Card>
+            </Col>
+
             <Col span={24}>
               <Card title="睡眠质量评分" className={styles.chartCard}>
                 <Row gutter={[16, 16]}>
