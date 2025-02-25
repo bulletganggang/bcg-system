@@ -18,6 +18,8 @@ import {
   AlertOutlined,
   CalendarOutlined,
 } from "@ant-design/icons";
+import ExportButton from "../../components/ExportButton";
+import { getExportConfig, getExportFileName } from "../../utils/pdf-sheet-export";
 import styles from "./style.module.scss";
 
 type ReportType = "weekly" | "monthly";
@@ -463,7 +465,26 @@ const Analysis: React.FC = () => {
 
   return (
     <div>
-      <Card title="数据分析" className={styles.analysisCard} loading={loading}>
+      <Card
+        title="数据分析"
+        className={styles.analysisCard}
+        loading={loading}
+        extra={
+          <ExportButton
+            excelData={getExportConfig(analysisData, {
+              sleepQualityAnomalies: anomalyStats.sleepQualityAnomalies,
+              sleepDurationAnomalies: anomalyStats.sleepDurationAnomalies,
+              sleepPatternAnomalies: anomalyStats.sleepPatternAnomalies,
+            })}
+            pdfTargetSelector=".ant-card-body"
+            fileNamePrefix={getExportFileName(
+              selectedDate.toDate(),
+              analysisType
+            )}
+            disabled={loading}
+          />
+        }
+      >
         <Space className={styles.dateSelector}>
           <Select
             value={analysisType}
