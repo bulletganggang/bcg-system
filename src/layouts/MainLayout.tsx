@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Layout, Menu, theme, Avatar, Dropdown } from "antd";
+import React, { useEffect, useState } from "react";
+import { Layout, Menu, theme, Avatar, Dropdown, Modal } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -24,6 +24,7 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { name, avatar } = useSelector((state: RootState) => state.user);
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -63,6 +64,11 @@ const MainLayout: React.FC = () => {
     } catch (error) {
       console.error("退出登录失败:", error);
     }
+  };
+
+  // 显示退出确认弹窗
+  const showLogoutModal = () => {
+    setIsLogoutModalVisible(true);
   };
 
   // 菜单项配置
@@ -107,7 +113,7 @@ const MainLayout: React.FC = () => {
         key: "logout",
         icon: <LogoutOutlined />,
         label: "退出登录",
-        onClick: handleLogout,
+        onClick: showLogoutModal,
       },
     ],
     style: {
@@ -166,6 +172,17 @@ const MainLayout: React.FC = () => {
           </Content>
         </Layout>
       </Layout>
+      <Modal
+        title="退出登录"
+        open={isLogoutModalVisible}
+        onOk={handleLogout}
+        onCancel={() => setIsLogoutModalVisible(false)}
+        okText="确认"
+        cancelText="取消"
+        centered
+      >
+        <p>确定要退出登录吗？</p>
+      </Modal>
     </Layout>
   );
 };
