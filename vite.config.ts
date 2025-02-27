@@ -23,7 +23,7 @@ export default defineConfig({
     open: true,
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target: "http://47.96.42.198:8787",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ""),
       },
@@ -32,13 +32,23 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
+    reportCompressedSize: true,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         manualChunks: {
-          "react-vendor": ["react", "react-dom"],
-          "antd-vendor": ["antd"],
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "antd-vendor": ["antd", "@ant-design/icons"],
           "echarts-vendor": ["echarts", "echarts-for-react"],
+          "redux-vendor": ["@reduxjs/toolkit", "react-redux"],
         },
+      },
+    },
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
       },
     },
   },
