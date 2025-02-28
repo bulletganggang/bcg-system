@@ -11,11 +11,15 @@ import {
   Upload,
   Input,
 } from "antd";
-import { EditOutlined, CameraOutlined } from "@ant-design/icons";
-import type { UploadChangeParam } from "antd/es/upload";
-import type { RcFile, UploadFile } from "antd/es/upload/interface";
+import {
+  EditOutlined,
+  LoadingOutlined,
+  CameraOutlined,
+} from "@ant-design/icons";
+import type { UploadProps } from "antd/es/upload";
+import type { RcFile } from "antd/es/upload/interface";
 import { useDispatch, useSelector } from "react-redux";
-import { updateUserName, updateUserAvatar } from "@/store/slices/userSlice";
+import { updateUserInfo } from "@/store/slices/userSlice";
 import type { RootState } from "@/store";
 import dayjs from "dayjs";
 import styles from "./style.module.scss";
@@ -26,7 +30,7 @@ interface UserResponse {
   avatar?: string;
   // 详细信息
   phone: string;
-  gender: "男" | "女";
+  gender: 0 | 1;
   height: number;
   weight: number;
   birthday: string;
@@ -40,55 +44,7 @@ const Profile: React.FC = () => {
   );
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
-
-  // 检查文件大小是否超过200KB
-  const beforeUpload = (file: RcFile) => {
-    // 检查文件类型
-    const isImage = /^image\/(jpeg|png|jpg)$/.test(file.type);
-    if (!isImage) {
-      message.error("只能上传 JPG/JPEG/PNG 格式的图片！");
-      return false;
-    }
-
-    // 检查文件大小
-    const isLt200KB = file.size / 1024 < 200;
-    if (!isLt200KB) {
-      message.error("图片大小不能超过200KB!");
-      return false;
-    }
-
-    return isImage && isLt200KB;
-  };
-
-  // 处理头像上传
-  const handleAvatarChange = (info: UploadChangeParam<UploadFile>) => {
-    if (info.file.status === "done") {
-      // 获取上传的文件
-      const reader = new FileReader();
-      reader.addEventListener("load", () => {
-        // 将文件转换为base64字符串
-        const base64 = reader.result as string;
-
-        // 1. 更新Redux中的头像（重要信息）
-        dispatch(updateUserAvatar(base64));
-
-        // 2. 更新localStorage（模拟调用保存用户信息接口）
-        const storedUserInfo = localStorage.getItem("userInfo");
-        if (storedUserInfo) {
-          const userInfo = JSON.parse(storedUserInfo);
-          // 保存所有信息，包括重要信息（用户名、新头像）和不重要信息
-          const updatedInfo = {
-            ...userInfo,
-            avatar: base64,
-          };
-          localStorage.setItem("userInfo", JSON.stringify(updatedInfo));
-        }
-
-        message.success("头像上传成功！");
-      });
-      reader.readAsDataURL(info.file.originFileObj as Blob);
-    }
-  };
+  const [loading, setLoading] = useState(false);
 
   // 获取用户信息
   const fetchUserInfo = useCallback(async () => {
@@ -103,18 +59,12 @@ const Profile: React.FC = () => {
 
       const userInfo: UserResponse = JSON.parse(storedUserInfo);
 
-      // 只将基本信息（用户名和头像）存入Redux
-      dispatch(updateUserName(userInfo.name));
-      if (userInfo.avatar) {
-        dispatch(updateUserAvatar(userInfo.avatar));
-      }
-
       // 详细信息保存在组件状态中
       setUserDetailInfo(userInfo);
     } catch (error) {
       console.error("获取用户信息失败:", error);
     }
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
     fetchUserInfo();
@@ -137,29 +87,103 @@ const Profile: React.FC = () => {
         birthday: dayjs(values.birthday).format("YYYY-MM-DD"),
       };
 
-      // 1. 检查用户名是否被修改
-      if (formattedValues.name !== name) {
-        // 如果用户名被修改，更新Redux（重要信息）
-        dispatch(updateUserName(formattedValues.name));
-      }
-
-      // 2. 准备要保存的完整用户信息
+      // 准备要保存的完整用户信息
       const updatedInfo: UserResponse = {
         ...formattedValues,
         avatar: avatar || undefined,
       };
 
-      // 3. 保存到localStorage（模拟调用保存用户信息接口）
+      // 1. 更新 Redux 中的用户信息
+      dispatch(updateUserInfo(updatedInfo));
+
+      // 2. 保存到 localStorage（模拟调用保存用户信息接口）
       localStorage.setItem("userInfo", JSON.stringify(updatedInfo));
 
-      // 4. 更新组件中的详细信息
+      // 3. 更新组件中的详细信息
       setUserDetailInfo(updatedInfo);
       setIsEditing(false);
       message.success("个人信息修改成功");
     } catch (error) {
       console.error("保存失败:", error);
+      message.error("保存失败，请重试");
     }
   };
+
+  // 处理头像上传前的检查
+  const beforeUpload = (file: RcFile) => {
+    const isImage = /^image\/(jpeg|png|jpg)$/.test(file.type);
+    if (!isImage) {
+      message.error("只能上传 JPG/PNG 格式的图片！");
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2;
+    if (!isLt2M) {
+      message.error("图片大小不能超过 2MB！");
+    }
+    return isImage && isLt2M;
+  };
+
+  // 处理头像上传
+  const handleAvatarUpload: UploadProps["onChange"] = async (info) => {
+    if (info.file.status === "uploading") {
+      setLoading(true);
+      return;
+    }
+
+    if (info.file.status === "done") {
+      try {
+        // 使用 FileReader 读取文件
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const avatarUrl = e.target?.result as string;
+
+          // 1. 更新 Redux 中的头像
+          dispatch(updateUserInfo({ avatar: avatarUrl }));
+
+          // 2. 更新 localStorage 中的用户信息（模拟调用保存用户信息接口）
+          const storedUserInfo = localStorage.getItem("userInfo");
+          if (storedUserInfo) {
+            const userInfo = JSON.parse(storedUserInfo);
+            localStorage.setItem(
+              "userInfo",
+              JSON.stringify({
+                ...userInfo,
+                avatar: avatarUrl,
+              })
+            );
+          }
+
+          // 3. 更新组件状态
+          setUserDetailInfo((prev) =>
+            prev ? { ...prev, avatar: avatarUrl } : null
+          );
+
+          message.success("头像更新成功");
+        };
+
+        // 读取文件内容
+        reader.readAsDataURL(info.file.originFileObj as Blob);
+      } catch (error) {
+        console.error("更新头像失败:", error);
+        message.error("头像更新失败");
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  // 上传按钮
+  const uploadButton = (
+    <div className={styles.avatarWrapper}>
+      <Avatar
+        size={80}
+        src={avatar}
+        icon={loading ? <LoadingOutlined /> : null}
+      />
+      <div className={styles.avatarOverlay}>
+        <CameraOutlined className={styles.cameraIcon} />
+      </div>
+    </div>
+  );
 
   if (!userDetailInfo) {
     return <Card loading />;
@@ -174,7 +198,7 @@ const Profile: React.FC = () => {
               name="avatar"
               showUploadList={false}
               beforeUpload={beforeUpload}
-              onChange={handleAvatarChange}
+              onChange={handleAvatarUpload}
               accept=".jpg,.jpeg,.png"
               customRequest={({ onSuccess }) => {
                 // 模拟上传成功
@@ -183,12 +207,7 @@ const Profile: React.FC = () => {
                 }, 0);
               }}
             >
-              <div className={styles.avatarWrapper}>
-                <Avatar src={avatar} size={80} />
-                <div className={styles.avatarOverlay}>
-                  <CameraOutlined className={styles.cameraIcon} />
-                </div>
-              </div>
+              {uploadButton}
             </Upload>
           </div>
           <div className={styles.userMeta}>
@@ -237,8 +256,8 @@ const Profile: React.FC = () => {
               rules={[{ required: true, message: "请选择性别" }]}
             >
               <Select>
-                <Select.Option value="男">男</Select.Option>
-                <Select.Option value="女">女</Select.Option>
+                <Select.Option value={1}>男</Select.Option>
+                <Select.Option value={0}>女</Select.Option>
               </Select>
             </Form.Item>
             <Form.Item
@@ -289,7 +308,9 @@ const Profile: React.FC = () => {
             </div>
             <div className={styles.infoItem}>
               <span className={styles.label}>性别</span>
-              <span className={styles.value}>{userDetailInfo.gender}</span>
+              <span className={styles.value}>
+                {userDetailInfo.gender === 1 ? "男" : "女"}
+              </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.label}>身高</span>

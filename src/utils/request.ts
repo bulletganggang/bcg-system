@@ -1,32 +1,21 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+import axios, { AxiosRequestConfig, Method } from "axios";
 import { message } from "antd";
-
-// 定义请求方法类型
-type RequestMethod = "get" | "post" | "put" | "delete";
-
-// 定义基础响应接口
-export interface BaseResponse<T> {
-  code: number;
-  message: string;
-  data: T;
-}
-
-// 定义请求参数接口
-export interface RequestParams {
-  [key: string]: string | object | number | boolean | null | undefined;
-}
+import { store } from "../store";
+import { clearUserInfo } from "../store/slices/userSlice";
+import { ApiResponse, RequestParams } from "@/types";
 
 // 创建 axios 实例
-const instance: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "/api", // 从环境变量获取基础URL
-  timeout: 10000, // 请求超时时间
-  withCredentials: true, // 允许携带 cookie
+const instance = axios.create({
+  // 开发环境使用相对路径（由 vite 代理处理），生产环境使用实际 API 地址
+  baseURL: import.meta.env.DEV ? "/api" : import.meta.env.VITE_API_URL,
+  timeout: 10000,
+  withCredentials: true, // 允许跨域请求携带 cookie
 });
 
 // 请求拦截器
 instance.interceptors.request.use(
   (config) => {
-    // 在这里可以统一添加 token 等认证信息
+    // 由于使用 cookie 认证，这里不需要手动设置 token
     return config;
   },
   (error) => {
@@ -37,16 +26,65 @@ instance.interceptors.request.use(
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
-    const { data } = response;
-    // 这里可以根据后端的数据结构进行调整
-    if (data.code === 0) {
-      return data.data;
+    const res = response.data;
+
+    // 根据后端返回的状态码处理
+    if (res.code === 0) {
+      // 请求成功
+      return res;
     }
-    message.error(data.message || "请求失败");
-    return Promise.reject(new Error(data.message || "请求失败"));
+
+    // 处理特定错误码
+    switch (res.code) {
+      case 40000:
+        message.error(res.message || "请求参数错误");
+        break;
+      case 40100:
+        // 未登录，清除用户信息并跳转到登录页
+        store.dispatch(clearUserInfo());
+        window.location.href = "/login";
+        break;
+      case 40101:
+        message.error(res.message || "无权限访问");
+        break;
+      case 40400:
+        message.error(res.message || "请求数据不存在");
+        break;
+      case 40300:
+        message.error(res.message || "禁止访问");
+        break;
+      case 50000:
+        message.error(res.message || "系统内部异常");
+        break;
+      default:
+        message.error(res.message || "请求失败");
+    }
+
+    return Promise.reject(new Error(res.message || "Error"));
   },
   (error) => {
-    message.error(error.response.data.detail[0].msg || "服务异常");
+    if (error.response) {
+      switch (error.response.status) {
+        case 401:
+          // 未授权，清除用户信息并跳转到登录页
+          store.dispatch(clearUserInfo());
+          window.location.href = "/login";
+          break;
+        case 403:
+          message.error("没有权限访问该资源");
+          break;
+        case 404:
+          message.error("请求的资源不存在");
+          break;
+        case 500:
+          message.error("服务器错误，请稍后重试");
+          break;
+        default:
+          message.error(error.response.data?.message || "请求失败");
+      }
+    } else {
+      message.error("网络错误，请检查网络连接");
+    }
     return Promise.reject(error);
   }
 );
@@ -59,27 +97,24 @@ instance.interceptors.response.use(
  * @param config 额外配置
  * @returns Promise
  */
-export const request = <TResponse>(
-  method: RequestMethod,
+export const request = async <T = any>(
+  method: Method,
   url: string,
   data?: RequestParams,
   config?: AxiosRequestConfig
-): Promise<TResponse> => {
-  const configs = {
-    ...config,
+): Promise<ApiResponse<T>> => {
+  const options: AxiosRequestConfig = {
     method,
     url,
+    ...(method.toLowerCase() === "get" ? { params: data } : { data }),
+    ...config,
   };
 
-  // GET 和 DELETE 请求参数放在 params 中
-  if (method === "get" || method === "delete") {
-    configs.params = data;
-  } else {
-    // POST 和 PUT 请求参数放在 data 中
-    configs.data = data;
+  try {
+    return await instance.request(options);
+  } catch (error) {
+    throw error;
   }
-
-  return instance.request<BaseResponse<TResponse>, TResponse>(configs);
 };
 
 export default request;

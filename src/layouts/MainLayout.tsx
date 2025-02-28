@@ -10,7 +10,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
-import { setUserBasicInfo } from "../store/slices/userSlice";
+import { setUserInfo } from "../store/slices/userSlice";
 import styles from "./style.module.scss";
 // import request from "@/utils/request";
 
@@ -38,8 +38,10 @@ const MainLayout: React.FC = () => {
       const parsedUserInfo = JSON.parse(storedUserInfo);
       // 将用户基本信息存储到Redux
       dispatch(
-        setUserBasicInfo({
-          name: parsedUserInfo.name,
+        setUserInfo({
+          id: parsedUserInfo.id || "",
+          name: parsedUserInfo.name || "",
+          phone: parsedUserInfo.phone || "",
           avatar: parsedUserInfo.avatar,
         })
       );
@@ -58,7 +60,14 @@ const MainLayout: React.FC = () => {
       // 清除本地存储的用户信息
       localStorage.removeItem("userInfo");
       // 重置用户信息
-      dispatch(setUserBasicInfo({ name: "", avatar: undefined }));
+      dispatch(
+        setUserInfo({
+          id: "",
+          name: "",
+          phone: "",
+          avatar: undefined,
+        })
+      );
       // 跳转到登录页
       navigate("/login");
     } catch (error) {

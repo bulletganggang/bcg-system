@@ -1,31 +1,20 @@
 import React, { useState } from "react";
 import { Card, Tabs, Form, Input, Button, message, Row, Col } from "antd";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
 import { LockOutlined, MobileOutlined } from "@ant-design/icons";
 import type { TabsProps } from "antd";
-import request, { RequestParams } from "@/utils/request";
+import request from "@/utils/request";
+import { setUserInfo } from "@/store/slices/userSlice";
+// import { LoginParams, LoginResponse, ValidLoginParams } from "@/types";
+import { LoginParams } from "@/types";
 import styles from "./style.module.scss";
-
-// 登录参数接口
-interface LoginParams extends RequestParams {
-  phone: string;
-  password?: string;
-  verifyCode?: string;
-  type: "verify" | "password"; // 登录类型
-}
-
-// 登录响应接口
-// interface LoginResponse {
-//   userInfo: {
-//     name: string;
-//     avatar?: string;
-//   };
-// }
 
 const Login: React.FC = () => {
   const [verifyForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [activeTab, setActiveTab] = useState<"verify" | "password">("verify");
@@ -61,12 +50,12 @@ const Login: React.FC = () => {
   };
 
   // 处理登录
-  const handleLogin = async (values: Omit<LoginParams, "type">) => {
+  const handleLogin = async (values: LoginParams) => {
     try {
       setLoading(true);
 
       // 根据当前登录方式验证必填字段
-      if (activeTab === "verify" && !values.verifyCode) {
+      if (activeTab === "verify" && !values.code) {
         message.error("请输入验证码");
         return;
       }
@@ -75,17 +64,29 @@ const Login: React.FC = () => {
         return;
       }
 
-      // // 实际登录逻辑(暂时跳过登录验证)
-      // const loginParams: LoginParams = {
-      //   ...values,
-      //   phone: values.phone as string,
-      //   type: activeTab,
-      // };
-      // await request("post", "/login", loginParams);
-      // message.success("登录成功");
+      // TODO: 后端接口完成后，这里需要：
+      // 1. 调用登录接口获取 token
+      // 2. token 会自动保存在 cookie 中（由后端设置 httpOnly cookie）
+      // 3. 获取用户信息
+      // const loginParams: ValidLoginParams =
+      //   activeTab === "verify"
+      //     ? { phone: values.phone, code: values.code! }
+      //     : { phone: values.phone, password: values.password! };
+      // const loginResponse = await request.post('/api/login', loginParams);
+      // const userInfoResponse = await request.get('/api/user/info');
+      // dispatch(setUserInfo({ ...userInfoResponse.data, isAuthenticated: true }));
 
-      // 模拟登录成功
-      localStorage.setItem("userInfo", JSON.stringify({ phone: values.phone }));
+      // 临时使用 localStorage 模拟，后端完成后移除
+      const mockUserInfo = {
+        id: "1",
+        name: "test",
+        phone: values.phone,
+        avatar: undefined,
+        isAuthenticated: true,
+      };
+      localStorage.setItem("userInfo", JSON.stringify(mockUserInfo));
+      dispatch(setUserInfo(mockUserInfo));
+
       message.success("登录成功");
       navigate("/sleep");
     } catch (error) {
@@ -125,7 +126,7 @@ const Login: React.FC = () => {
           </Form.Item>
 
           <Form.Item
-            name="verifyCode"
+            name="code"
             rules={[{ required: true, message: "请输入验证码" }]}
           >
             <Row gutter={8}>

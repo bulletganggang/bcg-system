@@ -1,36 +1,31 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { UserInfo } from "@/types";
 
-interface UserState {
-  name: string;
-  avatar?: string;
+interface UserState extends UserInfo {
+  isAuthenticated: boolean;
 }
 
 const initialState: UserState = {
+  id: "",
   name: "",
-  avatar: undefined,
+  phone: "",
+  isAuthenticated: false,
 };
 
 const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setUserBasicInfo: (
-      state,
-      action: PayloadAction<{ name: string; avatar?: string }>
-    ) => {
-      state.name = action.payload.name;
-      state.avatar = action.payload.avatar;
+    setUserInfo: (state, action: PayloadAction<UserInfo>) => {
+      return { ...state, ...action.payload, isAuthenticated: true };
     },
-    updateUserName: (state, action: PayloadAction<string>) => {
-      state.name = action.payload;
+    updateUserInfo: (state, action: PayloadAction<Partial<UserInfo>>) => {
+      Object.assign(state, action.payload);
     },
-    updateUserAvatar: (state, action: PayloadAction<string>) => {
-      state.avatar = action.payload;
-    },
+    clearUserInfo: () => initialState,
   },
 });
 
-export const { setUserBasicInfo, updateUserName, updateUserAvatar } =
-  userSlice.actions;
+export const { setUserInfo, updateUserInfo, clearUserInfo } = userSlice.actions;
 
 export default userSlice.reducer;
