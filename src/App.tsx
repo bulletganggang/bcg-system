@@ -10,6 +10,7 @@ import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
 import { store } from "./store";
 import MainLayout from "./layouts/MainLayout";
+import AuthGuard from "./components/AuthGuard";
 import React, { Suspense } from "react";
 import { Spin } from "antd";
 
@@ -35,14 +36,6 @@ const LoadingComponent: React.FC = () => (
   </div>
 );
 
-// 路由守卫组件
-const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const isAuthenticated = localStorage.getItem("userInfo") !== null;
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-};
-
 // 创建路由配置
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -58,9 +51,9 @@ const router = createBrowserRouter(
       <Route
         path="/"
         element={
-          <PrivateRoute>
+          <AuthGuard>
             <MainLayout />
-          </PrivateRoute>
+          </AuthGuard>
         }
       >
         {/* 根路径重定向到sleep */}
