@@ -6,9 +6,10 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import { Provider } from "react-redux";
+import { PersistGate } from "redux-persist/integration/react";
 import { ConfigProvider } from "antd";
 import zhCN from "antd/locale/zh_CN";
-import { store } from "./store";
+import { store, persistor } from "./store";
 import MainLayout from "./layouts/MainLayout";
 import AuthGuard from "./components/AuthGuard";
 import React, { Suspense } from "react";
@@ -112,19 +113,14 @@ const router = createBrowserRouter(
 
 const App: React.FC = () => {
   return (
-    <ConfigProvider locale={zhCN}>
-      <RouterProvider router={router} />
-    </ConfigProvider>
-  );
-};
-
-// 包装App组件with Redux Provider
-const WrappedApp: React.FC = () => {
-  return (
     <Provider store={store}>
-      <App />
+      <PersistGate loading={<LoadingComponent />} persistor={persistor}>
+        <ConfigProvider locale={zhCN}>
+          <RouterProvider router={router} />
+        </ConfigProvider>
+      </PersistGate>
     </Provider>
   );
 };
 
-export default WrappedApp;
+export default App;

@@ -72,8 +72,10 @@ src/
 
 ### 安装依赖
 
+存在对等依赖冲突，请使用 --legacy-peer-deps
+
 ```bash
-npm install
+npm install --legacy-peer-deps
 ```
 
 ### 启动开发服务器
