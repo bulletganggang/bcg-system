@@ -6,8 +6,8 @@ import { LockOutlined, MobileOutlined } from "@ant-design/icons";
 import type { TabsProps } from "antd";
 import request from "@/utils/request";
 import { setUserInfo } from "@/store/slices/userSlice";
-// import { LoginParams, LoginResponse, ValidLoginParams } from "@/types";
-import { LoginParams } from "@/types";
+import { LoginParams, ValidLoginParams } from "@/types";
+import { API_PATHS } from "@/constants/api";
 import styles from "./style.module.scss";
 
 const Login: React.FC = () => {
@@ -27,7 +27,7 @@ const Login: React.FC = () => {
       const phone = verifyForm.getFieldValue("phone");
 
       setLoading(true);
-      await request("post", "/sendVerifyCode", { phone });
+      await request("post", API_PATHS.USER.SMS_CODE, { phone });
       message.success("验证码已发送");
 
       // 开始倒计时
@@ -64,28 +64,17 @@ const Login: React.FC = () => {
         return;
       }
 
-      // TODO: 后端接口完成后，这里需要：
-      // 1. 调用登录接口获取 token
-      // 2. token 会自动保存在 cookie 中（由后端设置 httpOnly cookie）
-      // 3. 获取用户信息
-      // const loginParams: ValidLoginParams =
-      //   activeTab === "verify"
-      //     ? { phone: values.phone, code: values.code! }
-      //     : { phone: values.phone, password: values.password! };
-      // const loginResponse = await request.post('/api/login', loginParams);
-      // const userInfoResponse = await request.get('/api/user/info');
-      // dispatch(setUserInfo({ ...userInfoResponse.data, isAuthenticated: true }));
+      // 构造登录参数
+      const loginParams: ValidLoginParams =
+        activeTab === "verify"
+          ? { phone: values.phone, code: values.code! }
+          : { phone: values.phone, password: values.password! };
 
-      // 临时使用 localStorage 模拟，后端完成后移除
-      const mockUserInfo = {
-        id: "1",
-        name: "test",
-        phone: values.phone,
-        avatar: undefined,
-        isAuthenticated: true,
-      };
-      localStorage.setItem("userInfo", JSON.stringify(mockUserInfo));
-      dispatch(setUserInfo(mockUserInfo));
+      // 调用登录接口
+      const response = await request("post", API_PATHS.USER.LOGIN, loginParams);
+
+      // 登录成功后，更新 Redux 状态
+      dispatch(setUserInfo(response.data));
 
       message.success("登录成功");
       navigate("/sleep");

@@ -1,15 +1,17 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { UserInfo } from "@/types";
 
-interface UserState extends UserInfo {
-  isAuthenticated: boolean;
-}
-
-const initialState: UserState = {
-  id: "",
-  name: "",
+const initialState: UserInfo = {
+  userId: undefined,
+  username: "",
   phone: "",
-  isAuthenticated: false,
+  avatar: undefined,
+  gender: 0,
+  weight: undefined,
+  height: undefined,
+  birthday: undefined,
+  role: undefined,
+  isFirstLogin: undefined,
 };
 
 const userSlice = createSlice({
@@ -17,7 +19,7 @@ const userSlice = createSlice({
   initialState,
   reducers: {
     setUserInfo: (state, action: PayloadAction<UserInfo>) => {
-      return { ...state, ...action.payload, isAuthenticated: true };
+      return { ...state, ...action.payload };
     },
     updateUserInfo: (state, action: PayloadAction<Partial<UserInfo>>) => {
       Object.assign(state, action.payload);

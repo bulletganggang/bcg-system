@@ -9,9 +9,9 @@ interface AuthGuardProps {
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const location = useLocation();
-  const { isAuthenticated } = useSelector((state: RootState) => state.user);
+  const { userId } = useSelector((state: RootState) => state.user);
 
-  if (!isAuthenticated) {
+  if (!userId) {
     // 将用户重定向到登录页面，并记录他们试图访问的URL
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

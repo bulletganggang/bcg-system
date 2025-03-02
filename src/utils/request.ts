@@ -3,6 +3,7 @@ import { message } from "antd";
 import { store } from "../store";
 import { clearUserInfo } from "../store/slices/userSlice";
 import { ApiResponse, RequestParams } from "@/types";
+import { API_CONFIG, ApiConfigKey } from "@/constants/api";
 
 // 创建 axios 实例
 const instance = axios.create({
@@ -103,10 +104,14 @@ export const request = async <T = any>(
   data?: RequestParams,
   config?: AxiosRequestConfig
 ): Promise<ApiResponse<T>> => {
+  const apiConfig = API_CONFIG[url as ApiConfigKey];
+  const isGetRequest = method.toLowerCase() === "get";
+  const shouldUseData = apiConfig?.useData === true;
+
   const options: AxiosRequestConfig = {
     method,
     url,
-    ...(method.toLowerCase() === "get" ? { params: data } : { data }),
+    ...(isGetRequest || !shouldUseData ? { params: data } : { data }),
     ...config,
   };
 

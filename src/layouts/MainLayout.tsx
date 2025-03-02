@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Layout, Menu, theme, Avatar, Dropdown, Modal } from "antd";
+import { Layout, Menu, theme, Avatar, Dropdown, Modal, message } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -10,9 +10,9 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
-import { setUserInfo } from "../store/slices/userSlice";
+import { setUserInfo, clearUserInfo } from "../store/slices/userSlice";
 import styles from "./style.module.scss";
-// import request from "@/utils/request";
+import request from "@/utils/request";
 
 const { Header, Sider, Content } = Layout;
 
@@ -23,7 +23,7 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
-  const { name, avatar } = useSelector((state: RootState) => state.user);
+  const { username, avatar } = useSelector((state: RootState) => state.user);
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   const {
@@ -32,46 +32,36 @@ const MainLayout: React.FC = () => {
 
   // 获取用户信息
   useEffect(() => {
-    // TODO: 调用后端接口，获取用户信息
-    const storedUserInfo = localStorage.getItem("userInfo");
-    if (storedUserInfo) {
-      const parsedUserInfo = JSON.parse(storedUserInfo);
-      // 将用户基本信息存储到Redux
-      dispatch(
-        setUserInfo({
-          id: parsedUserInfo.id || "",
-          name: parsedUserInfo.name || "",
-          phone: parsedUserInfo.phone || "",
-          avatar: parsedUserInfo.avatar,
-        })
-      );
-    } else {
-      // 如果没有用户信息，重定向到登录页
-      navigate("/login");
-    }
+    const fetchUserInfo = async () => {
+      try {
+        // 调用获取用户信息接口
+        const response = await request("get", "/user/user-profile");
+        // 更新 Redux 状态
+        dispatch(setUserInfo(response.data));
+      } catch (error) {
+        // 如果获取用户信息失败（未登录或 token 过期），跳转到登录页
+        console.error("获取用户信息失败:", error);
+        navigate("/login");
+      }
+    };
+
+    fetchUserInfo();
   }, [navigate, dispatch]);
 
   // 处理退出登录
   const handleLogout = async () => {
     try {
-      // 暂时隐藏登录退出验证
-      // await request("post", "/logout");
+      // 调用退出登录接口
+      await request("post", "/user/logout");
 
-      // 清除本地存储的用户信息
-      localStorage.removeItem("userInfo");
-      // 重置用户信息
-      dispatch(
-        setUserInfo({
-          id: "",
-          name: "",
-          phone: "",
-          avatar: undefined,
-        })
-      );
+      // 清除 Redux 状态
+      dispatch(clearUserInfo());
+
       // 跳转到登录页
       navigate("/login");
     } catch (error) {
       console.error("退出登录失败:", error);
+      message.error("退出登录失败，请重试");
     }
   };
 
@@ -161,7 +151,7 @@ const MainLayout: React.FC = () => {
                   onClick={() => navigate("/profile")}
                 >
                   <Avatar src={avatar} size="large" />
-                  <span className={styles.username}>{name}</span>
+                  <span className={styles.username}>{username}</span>
                 </div>
               </Dropdown>
             </div>
