@@ -4,10 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { LockOutlined, MobileOutlined } from "@ant-design/icons";
 import type { TabsProps } from "antd";
-import request from "@/utils/request";
 import { setUserInfo } from "@/store/slices/userSlice";
-import { LoginParams, ValidLoginParams } from "@/types";
-import { API_PATHS } from "@/constants/api";
+import { LoginParams } from "@/types";
+import { login, sendSmsCode } from "@/api/user";
 import styles from "./style.module.scss";
 
 const Login: React.FC = () => {
@@ -27,7 +26,7 @@ const Login: React.FC = () => {
       const phone = verifyForm.getFieldValue("phone");
 
       setLoading(true);
-      await request("post", API_PATHS.USER.SMS_CODE, { phone });
+      await sendSmsCode(phone);
       message.success("验证码已发送");
 
       // 开始倒计时
@@ -65,13 +64,13 @@ const Login: React.FC = () => {
       }
 
       // 构造登录参数
-      const loginParams: ValidLoginParams =
+      const loginParams =
         activeTab === "verify"
           ? { phone: values.phone, code: values.code! }
           : { phone: values.phone, password: values.password! };
 
       // 调用登录接口
-      const response = await request("post", API_PATHS.USER.LOGIN, loginParams);
+      const response = await login(loginParams);
 
       // 登录成功后，更新 Redux 状态
       dispatch(setUserInfo(response.data));

@@ -11,8 +11,10 @@ import {
 } from "@ant-design/icons";
 import type { RootState } from "../store";
 import { setUserInfo, clearUserInfo } from "../store/slices/userSlice";
+import { setDevices, clearDevices } from "../store/slices/deviceSlice";
+import { getProfile, logout } from "@/api/user";
+import { getDeviceList } from "@/api/device";
 import styles from "./style.module.scss";
-import request from "@/utils/request";
 
 const { Header, Sider, Content } = Layout;
 
@@ -30,32 +32,36 @@ const MainLayout: React.FC = () => {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
-  // 获取用户信息
+  // 获取用户信息和设备列表
   useEffect(() => {
-    const fetchUserInfo = async () => {
+    const fetchInitialData = async () => {
       try {
         // 调用获取用户信息接口
-        const response = await request("get", "/user/user-profile");
-        // 更新 Redux 状态
-        dispatch(setUserInfo(response.data));
+        const userResponse = await getProfile();
+        dispatch(setUserInfo(userResponse.data));
+
+        // 获取设备列表
+        const deviceResponse = await getDeviceList();
+        dispatch(setDevices(deviceResponse.data));
       } catch (error) {
-        // 如果获取用户信息失败（未登录或 token 过期），跳转到登录页
-        console.error("获取用户信息失败:", error);
+        // 如果获取信息失败（未登录或 token 过期），跳转到登录页
+        console.error("获取初始数据失败:", error);
         navigate("/login");
       }
     };
 
-    fetchUserInfo();
+    fetchInitialData();
   }, [navigate, dispatch]);
 
   // 处理退出登录
   const handleLogout = async () => {
     try {
       // 调用退出登录接口
-      await request("post", "/user/logout");
+      await logout();
 
       // 清除 Redux 状态
       dispatch(clearUserInfo());
+      dispatch(clearDevices());
 
       // 跳转到登录页
       navigate("/login");
