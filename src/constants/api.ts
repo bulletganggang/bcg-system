@@ -6,6 +6,7 @@
 export const API_CONFIG = {
   // 用户相关接口
   "/user/login": { useData: true }, // 登录
+  "/user/change/avatar": { useData: true }, // 登录
 } as const;
 
 export type ApiConfigKey = keyof typeof API_CONFIG;
@@ -21,6 +22,16 @@ export const API_PATHS = {
     UPDATE: "/user/update",
     CHANGE_AVATAR: "/user/change/avatar",
     SMS_CODE: "/user/smscode",
+  },
+  DEVICE: {
+    BIND: "/device/bind",
+    UNBIND: "/device/unbind",
+    LIST: "/device/user-query",
+  },
+  DATA: {
+    DAILY: "/data/daily",
+    RANGE: "/data/range",
+    LIST: "/data/list",
   },
   // 可以添加其他模块的接口路径
 } as const;
