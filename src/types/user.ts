@@ -26,6 +26,33 @@ export interface UserInfo {
 }
 
 /**
+ * 更新用户信息接口
+ */
+export interface UpdateUserInfo {
+  /** 用户ID，唯一标识 */
+  userId?: number;
+  /** 用户名 可重复 */
+  username?: string;
+  /** 用户头像URL */
+  avatar?: string;
+  /** 用户手机号码 */
+  phone?: string;
+  /** 性别 0 未定义 1 男 2 女 */
+  gender?: number;
+  /** 体重 */
+  weight?: string;
+  /** 身高 */
+  height?: string;
+  /** 生日 */
+  birthday?: string;
+  /** 用户角色 0-admin 1-user */
+  role?: number;
+  /** 是否首次登录 */
+  isFirstLogin?: number;
+  [property: string]: any;
+}
+
+/**
  * 登录参数接口
  */
 export interface LoginParams {
