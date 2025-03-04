@@ -69,9 +69,9 @@ export interface SleepStage {
 }
 
 /**
- * 睡眠数据接口
+ * 睡眠分析历史数据接口
  */
-export interface SleepData {
+export interface SleepAnalysisData {
   /** 记录ID */
   id: string;
   /** 用户ID */
