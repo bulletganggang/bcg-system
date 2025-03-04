@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   Card,
   Avatar,
@@ -10,97 +10,80 @@ import {
   DatePicker,
   Upload,
   Input,
+  Modal,
+  List,
 } from "antd";
 import {
   EditOutlined,
   LoadingOutlined,
   CameraOutlined,
+  PlusOutlined,
+  HeartOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd/es/upload";
 import type { RcFile } from "antd/es/upload/interface";
 import { useDispatch, useSelector } from "react-redux";
 import { updateUserInfo } from "@/store/slices/userSlice";
+import { setDevices, setCurrentDevice } from "@/store/slices/deviceSlice";
 import type { RootState } from "@/store";
+import type { UserInfo, Device } from "@/types";
 import dayjs from "dayjs";
 import styles from "./style.module.scss";
-
-interface UserResponse {
-  // 基本信息
-  name: string;
-  avatar?: string;
-  // 详细信息
-  phone: string;
-  gender: 0 | 1;
-  height: number;
-  weight: number;
-  birthday: string;
-}
+import {
+  bindDevice,
+  unbindDevice,
+  getDeviceList,
+  updateProfile,
+  changeAvatar,
+} from "@/api";
+import classNames from "classnames";
 
 const Profile: React.FC = () => {
   const dispatch = useDispatch();
-  const { name, avatar } = useSelector((state: RootState) => state.user);
-  const [userDetailInfo, setUserDetailInfo] = useState<UserResponse | null>(
-    null
+  const userInfo = useSelector((state: RootState) => state.user);
+  const devices = useSelector((state: RootState) => state.device.devices);
+  const currentDevice = useSelector(
+    (state: RootState) => state.device.currentDevice
   );
+
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-
-  // 获取用户信息
-  const fetchUserInfo = useCallback(async () => {
-    try {
-      // TODO: 实际项目中这里会调用后端API
-      // const response = await request.get('/api/user/info');
-      // const userInfo = response.data;
-
-      // 临时使用localStorage模拟后端返回的数据
-      const storedUserInfo = localStorage.getItem("userInfo");
-      if (!storedUserInfo) return;
-
-      const userInfo: UserResponse = JSON.parse(storedUserInfo);
-
-      // 详细信息保存在组件状态中
-      setUserDetailInfo(userInfo);
-    } catch (error) {
-      console.error("获取用户信息失败:", error);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchUserInfo();
-  }, [fetchUserInfo]);
+  const [isBindModalVisible, setIsBindModalVisible] = useState(false);
+  const [bindForm] = Form.useForm();
+  const [bindLoading, setBindLoading] = useState(false);
+  const [isUnbindModalVisible, setIsUnbindModalVisible] = useState(false);
+  const [unbindingDevice, setUnbindingDevice] = useState<Device | null>(null);
+  const [unbindLoading, setUnbindLoading] = useState(false);
 
   const handleEditClick = () => {
     setIsEditing(true);
     form.setFieldsValue({
-      ...userDetailInfo,
-      name, // 使用Redux中的用户名
-      birthday: dayjs(userDetailInfo?.birthday),
+      ...userInfo,
+      gender: userInfo.gender === 0 ? undefined : userInfo.gender,
+      birthday: userInfo.birthday ? dayjs(userInfo.birthday) : undefined,
     });
   };
 
-  const handleSave = async (values: Omit<UserResponse, "avatar">) => {
+  const handleSave = async (values: Omit<UserInfo, "avatar">) => {
     try {
       const formattedValues = {
-        ...userDetailInfo,
         ...values,
         birthday: dayjs(values.birthday).format("YYYY-MM-DD"),
+        weight: String(values.weight),
+        height: String(values.height),
       };
 
-      // 准备要保存的完整用户信息
-      const updatedInfo: UserResponse = {
-        ...formattedValues,
-        avatar: avatar || undefined,
-      };
+      await updateProfile(formattedValues, userInfo.userId!);
 
-      // 1. 更新 Redux 中的用户信息
-      dispatch(updateUserInfo(updatedInfo));
+      // 更新 Redux 状态时保持为数字类型
+      dispatch(
+        updateUserInfo({
+          ...values,
+          birthday: dayjs(values.birthday).format("YYYY-MM-DD"),
+        })
+      );
 
-      // 2. 保存到 localStorage（模拟调用保存用户信息接口）
-      localStorage.setItem("userInfo", JSON.stringify(updatedInfo));
-
-      // 3. 更新组件中的详细信息
-      setUserDetailInfo(updatedInfo);
       setIsEditing(false);
       message.success("个人信息修改成功");
     } catch (error) {
@@ -131,40 +114,16 @@ const Profile: React.FC = () => {
 
     if (info.file.status === "done") {
       try {
-        // 使用 FileReader 读取文件
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const avatarUrl = e.target?.result as string;
+        // 上传头像
+        const response = await changeAvatar(info.file.originFileObj as File);
 
-          // 1. 更新 Redux 中的头像
-          dispatch(updateUserInfo({ avatar: avatarUrl }));
+        // 更新 Redux 中的头像
+        dispatch(updateUserInfo({ avatar: response.data }));
 
-          // 2. 更新 localStorage 中的用户信息（模拟调用保存用户信息接口）
-          const storedUserInfo = localStorage.getItem("userInfo");
-          if (storedUserInfo) {
-            const userInfo = JSON.parse(storedUserInfo);
-            localStorage.setItem(
-              "userInfo",
-              JSON.stringify({
-                ...userInfo,
-                avatar: avatarUrl,
-              })
-            );
-          }
-
-          // 3. 更新组件状态
-          setUserDetailInfo((prev) =>
-            prev ? { ...prev, avatar: avatarUrl } : null
-          );
-
-          message.success("头像更新成功");
-        };
-
-        // 读取文件内容
-        reader.readAsDataURL(info.file.originFileObj as Blob);
+        message.success("头像上传成功");
       } catch (error) {
-        console.error("更新头像失败:", error);
-        message.error("头像更新失败");
+        console.error("头像上传失败:", error);
+        message.error("头像上传失败，请重试");
       } finally {
         setLoading(false);
       }
@@ -176,7 +135,7 @@ const Profile: React.FC = () => {
     <div className={styles.avatarWrapper}>
       <Avatar
         size={80}
-        src={avatar}
+        src={userInfo.avatar}
         icon={loading ? <LoadingOutlined /> : null}
       />
       <div className={styles.avatarOverlay}>
@@ -185,9 +144,86 @@ const Profile: React.FC = () => {
     </div>
   );
 
-  if (!userDetailInfo) {
-    return <Card loading />;
-  }
+  const handleBindDevice = async (values: { deviceCode: string }) => {
+    if (!userInfo.userId) {
+      message.error("用户ID不能为空");
+      return;
+    }
+
+    try {
+      setBindLoading(true);
+      // 调用绑定设备 API
+      await bindDevice(values.deviceCode, userInfo.userId);
+
+      // 绑定成功后重新获取设备列表
+      const response = await getDeviceList();
+      dispatch(setDevices(response.data));
+
+      setIsBindModalVisible(false);
+      bindForm.resetFields();
+      message.success("设备绑定成功");
+    } catch (error) {
+      console.error("绑定设备失败:", error);
+      message.error("绑定设备失败，请重试");
+    } finally {
+      setBindLoading(false);
+    }
+  };
+
+  const handleUnbindDevice = async (device: Device) => {
+    if (!device.deviceCode) return;
+    setUnbindingDevice(device);
+    setIsUnbindModalVisible(true);
+  };
+
+  const confirmUnbind = async () => {
+    if (!unbindingDevice?.deviceCode || !userInfo.userId) return;
+
+    try {
+      setUnbindLoading(true);
+      await unbindDevice(unbindingDevice.deviceCode, userInfo.userId);
+      message.success("设备解绑成功");
+
+      // 直接更新Redux状态
+      const newDevices = devices.filter(
+        (d) => d.deviceCode !== unbindingDevice.deviceCode
+      );
+      dispatch(setDevices(newDevices));
+
+      // 如果解绑的是当前选中的设备
+      if (currentDevice?.deviceCode === unbindingDevice.deviceCode) {
+        // 如果还有其他设备，选择下一个设备
+        if (newDevices.length > 0) {
+          // 选择第一个设备
+          const nextDevice = newDevices[0];
+          dispatch(setCurrentDevice(nextDevice));
+        } else {
+          // 如果没有设备了，清空当前设备
+          dispatch(setCurrentDevice(null));
+        }
+      }
+    } catch (error) {
+      console.error("解绑设备失败:", error);
+      message.error("解绑设备失败，请重试");
+    } finally {
+      setUnbindLoading(false);
+      setIsUnbindModalVisible(false);
+      setUnbindingDevice(null);
+    }
+  };
+
+  const handleSelectDevice = (device: Device) => {
+    // 直接更新 Redux 中的当前设备
+    dispatch(setCurrentDevice(device));
+  };
+
+  const DeviceIcon: React.FC<{ type: Device["deviceType"] }> = () => {
+    return (
+      <div className={styles.deviceIcon}>
+        <HeartOutlined style={{ fontSize: "24px", color: "#1890ff" }} />
+      </div>
+    );
+  };
 
   return (
     <div className={styles.profileContainer}>
@@ -201,7 +237,6 @@ const Profile: React.FC = () => {
               onChange={handleAvatarUpload}
               accept=".jpg,.jpeg,.png"
               customRequest={({ onSuccess }) => {
-                // 模拟上传成功
                 setTimeout(() => {
                   onSuccess?.("ok");
                 }, 0);
@@ -211,10 +246,8 @@ const Profile: React.FC = () => {
             </Upload>
           </div>
           <div className={styles.userMeta}>
-            <div className={styles.userName}>{name}</div>
-            <div className={styles.userPhone}>
-              手机号：{userDetailInfo.phone}
-            </div>
+            <div className={styles.userName}>{userInfo.username}</div>
+            <div className={styles.userPhone}>手机号：{userInfo.phone}</div>
           </div>
         </div>
       </Card>
@@ -238,13 +271,13 @@ const Profile: React.FC = () => {
         {isEditing ? (
           <Form
             form={form}
-            initialValues={userDetailInfo}
+            initialValues={userInfo}
             onFinish={handleSave}
             layout="vertical"
             className={styles.editForm}
           >
             <Form.Item
-              name="name"
+              name="username"
               label="用户名"
               rules={[{ required: true, message: "请输入用户名" }]}
             >
@@ -255,9 +288,9 @@ const Profile: React.FC = () => {
               label="性别"
               rules={[{ required: true, message: "请选择性别" }]}
             >
-              <Select>
+              <Select placeholder="请选择性别">
                 <Select.Option value={1}>男</Select.Option>
-                <Select.Option value={0}>女</Select.Option>
+                <Select.Option value={2}>女</Select.Option>
               </Select>
             </Form.Item>
             <Form.Item
@@ -304,29 +337,121 @@ const Profile: React.FC = () => {
           <div className={styles.infoDisplay}>
             <div className={styles.infoItem}>
               <span className={styles.label}>用户名</span>
-              <span className={styles.value}>{name}</span>
+              <span className={styles.value}>{userInfo.username}</span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.label}>性别</span>
               <span className={styles.value}>
-                {userDetailInfo.gender === 1 ? "男" : "女"}
+                {userInfo.gender === 1
+                  ? "男"
+                  : userInfo.gender === 2
+                  ? "女"
+                  : ""}
               </span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.label}>身高</span>
-              <span className={styles.value}>{userDetailInfo.height}cm</span>
+              <span className={styles.value}>{userInfo.height}cm</span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.label}>体重</span>
-              <span className={styles.value}>{userDetailInfo.weight}kg</span>
+              <span className={styles.value}>{userInfo.weight}kg</span>
             </div>
             <div className={styles.infoItem}>
               <span className={styles.label}>出生日期</span>
-              <span className={styles.value}>{userDetailInfo.birthday}</span>
+              <span className={styles.value}>
+                {userInfo.birthday
+                  ? dayjs(userInfo.birthday).format("YYYY-MM-DD")
+                  : ""}
+              </span>
             </div>
           </div>
         )}
       </Card>
+
+      <Card
+        title="设备管理"
+        extra={
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setIsBindModalVisible(true)}
+          >
+            绑定设备
+          </Button>
+        }
+        className={styles.deviceCard}
+      >
+        <List
+          dataSource={devices}
+          renderItem={(device) => (
+            <List.Item
+              className={classNames(styles.deviceItem, {
+                [styles.selected]:
+                  device.deviceCode === currentDevice?.deviceCode,
+              })}
+              onClick={() => handleSelectDevice(device)}
+            >
+              <div className={styles.deviceInfo}>
+                <div className={styles.deviceIcon}>
+                  <DeviceIcon type={device.deviceType} />
+                </div>
+                <div className={styles.deviceMeta}>
+                  <div className={styles.deviceName}>{device.deviceName}</div>
+                  <div className={styles.deviceCode}>{device.deviceCode}</div>
+                </div>
+              </div>
+              <Button
+                danger
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleUnbindDevice(device);
+                }}
+              >
+                解绑
+              </Button>
+            </List.Item>
+          )}
+        />
+      </Card>
+
+      <Modal
+        title="绑定设备"
+        open={isBindModalVisible}
+        onOk={() => bindForm.submit()}
+        onCancel={() => {
+          setIsBindModalVisible(false);
+          bindForm.resetFields();
+        }}
+        confirmLoading={bindLoading}
+        centered
+      >
+        <Form form={bindForm} onFinish={handleBindDevice}>
+          <Form.Item
+            name="deviceCode"
+            rules={[{ required: true, message: "请输入设备码" }]}
+          >
+            <Input placeholder="请输入设备码" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="解绑设备"
+        open={isUnbindModalVisible}
+        onOk={confirmUnbind}
+        onCancel={() => {
+          setIsUnbindModalVisible(false);
+          setUnbindingDevice(null);
+        }}
+        confirmLoading={unbindLoading}
+        centered
+      >
+        <p>
+          是否确认解绑{unbindingDevice?.deviceName}(
+          {unbindingDevice?.deviceCode})？
+        </p>
+      </Modal>
     </div>
   );
 };

@@ -22,7 +22,7 @@ const deviceSlice = createSlice({
         state.currentDevice = action.payload[0];
       }
     },
-    setCurrentDevice: (state, action: PayloadAction<Device>) => {
+    setCurrentDevice: (state, action: PayloadAction<Device | null>) => {
       state.currentDevice = action.payload;
     },
     clearDevices: (state) => {
