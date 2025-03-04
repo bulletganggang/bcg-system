@@ -12,8 +12,7 @@ import {
 import type { RootState } from "../store";
 import { setUserInfo, clearUserInfo } from "../store/slices/userSlice";
 import { setDevices, clearDevices } from "../store/slices/deviceSlice";
-import { getProfile, logout } from "@/api/user";
-import { getDeviceList } from "@/api/device";
+import { getProfile, logout, getDeviceList } from "@/api";
 import styles from "./style.module.scss";
 
 const { Header, Sider, Content } = Layout;

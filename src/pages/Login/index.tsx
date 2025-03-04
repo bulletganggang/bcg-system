@@ -6,7 +6,7 @@ import { LockOutlined, MobileOutlined } from "@ant-design/icons";
 import type { TabsProps } from "antd";
 import { setUserInfo } from "@/store/slices/userSlice";
 import { LoginParams } from "@/types";
-import { login, sendSmsCode } from "@/api/user";
+import { login, sendSmsCode } from "@/api";
 import styles from "./style.module.scss";
 
 const Login: React.FC = () => {
