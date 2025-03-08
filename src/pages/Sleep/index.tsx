@@ -1,421 +1,319 @@
 import React, { useEffect, useState } from "react";
-import { Card, Row, Col, Statistic, DatePicker } from "antd";
+import {
+  Card,
+  Row,
+  Col,
+  Statistic,
+  DatePicker,
+  Empty,
+  Spin,
+  List,
+  Space,
+} from "antd";
+import {
+  StarFilled,
+  ClockCircleFilled,
+  RiseOutlined,
+  FieldTimeOutlined,
+} from "@ant-design/icons";
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 import type { DatePickerProps } from "antd/es/date-picker";
 import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./style.module.scss";
-import { roundUp } from "@/utils/math";
-
-interface SleepData {
-  date: string;
-  sleepTime: string;
-  wakeTime: string;
-  totalSleepTime: string;
-  sleepScore: number;
-  sleepStructure: {
-    lightSleep: number;
-    deepSleep: number;
-    remSleep: number;
-    awake: number;
-  };
-  sleepStages: Array<{
-    time: string;
-    stage: "rem" | "light" | "deep" | "awake";
-  }>;
-  breathingRate: {
-    max: number;
-    avg: number;
-    min: number;
-  };
-  heartRate: {
-    max: number;
-    avg: number;
-    min: number;
-  };
-  activityData: {
-    inactiveTime: number;
-    activeTime: number;
-    positionChangeTime: number;
-    bodyMovementTime: number;
-  };
-}
+import { useSelector } from "react-redux";
+import { getDailyData } from "@/api";
+import type { RootState } from "@/store";
+import type { SleepData } from "@/types";
+import {
+  getSleepStageOption,
+  getSleepSummaryOption,
+} from "@/configs/charts/sleep";
 
 const Sleep: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [loading, setLoading] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(dayjs());
   const [sleepData, setSleepData] = useState<SleepData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const currentDevice = useSelector(
+    (state: RootState) => state.device.currentDevice
+  );
+  const { userId } = useSelector((state: RootState) => state.user);
 
-  // 根据 URL 参数更新选中日期
+  // 从 URL 参数中获取日期
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const dateParam = params.get("date");
     if (dateParam) {
       setSelectedDate(dayjs(dateParam));
     }
-  }, [location.search]);
+  }, [location]);
 
   // 加载睡眠数据
-  useEffect(() => {
-    const loadSleepData = async () => {
+  const loadSleepData = async (date: dayjs.Dayjs) => {
+    if (!currentDevice?.deviceCode) {
+      return;
+    }
+
+    try {
       setLoading(true);
-      try {
-        // 这里应该是从API获取数据，现在用模拟数据
-        const mockData: SleepData = {
-          date: selectedDate.format("YYYY-MM-DD"),
-          sleepTime: "23:30",
-          wakeTime: "07:30",
-          totalSleepTime: "8小时",
-          sleepScore: 85,
-          sleepStructure: {
-            lightSleep: 240,
-            deepSleep: 120,
-            remSleep: 90,
-            awake: 30,
-          },
 
-          sleepStages: [
-            { time: "01:00", stage: "light" },
-            { time: "02:00", stage: "deep" },
-            { time: "04:00", stage: "rem" },
-            { time: "05:00", stage: "light" },
-            { time: "06:00", stage: "deep" },
-            { time: "08:00", stage: "light" },
-          ],
-          breathingRate: {
-            max: 18,
-            avg: 14,
-            min: 12,
-          },
-          heartRate: {
-            max: 75,
-            avg: 65,
-            min: 58,
-          },
-          activityData: {
-            inactiveTime: 490,
-            activeTime: 50,
-            positionChangeTime: 15,
-            bodyMovementTime: 35,
-          },
-        };
+      const response = await getDailyData({
+        date: date.format("YYYY-MM-DD"),
+        deviceCode: currentDevice.deviceCode,
+        userId,
+      });
+      setSleepData(response.data);
+    } catch (error) {
+      console.error("加载睡眠数据失败:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        setSleepData(mockData);
-      } catch (error) {
-        console.error("加载睡眠数据失败:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadSleepData();
-  }, [selectedDate]);
+  // 日期变化时重新加载数据
+  useEffect(() => {
+    loadSleepData(selectedDate);
+  }, [selectedDate, currentDevice]);
 
   // 处理日期选择
   const handleDateChange: DatePickerProps["onChange"] = (date) => {
     if (date) {
       setSelectedDate(date);
-
       navigate("/sleep");
     }
   };
 
-  // 睡眠结构饼图配置
-  const pieOption = {
-    tooltip: {
-      trigger: "item",
-      formatter: "{b}: {c}分钟 ({d}%)",
-    },
-    legend: {
-      orient: "horizontal",
-      bottom: 0,
-    },
-    series: [
-      {
-        type: "pie",
-        radius: ["50%", "70%"],
-        avoidLabelOverlap: false,
-        label: {
-          show: false,
-        },
-        data: [
-          {
-            name: "浅睡",
-            value: sleepData?.sleepStructure.lightSleep,
-            itemStyle: { color: "#36A2EB" },
-          },
-          {
-            name: "深睡",
-            value: sleepData?.sleepStructure.deepSleep,
-            itemStyle: { color: "#0000FF" },
-          },
-          {
-            name: "REM睡眠",
-            value: sleepData?.sleepStructure.remSleep,
-            itemStyle: { color: "#FF6384" },
-          },
-          {
-            name: "清醒",
-            value: sleepData?.sleepStructure.awake,
-            itemStyle: { color: "#4BC0C0" },
-          },
-        ],
-      },
-    ],
-  };
-
-  // 睡眠阶段图配置
-  const stagesOption = {
-    tooltip: {
-      trigger: "axis",
-    },
-    xAxis: {
-      type: "category",
-      data: sleepData?.sleepStages.map((stage) => stage.time),
-    },
-    yAxis: {
-      type: "category",
-      data: ["浅睡眠", "深睡眠", "REM睡眠"],
-    },
-    series: [
-      {
-        type: "line",
-        smooth: true,
-        data: sleepData?.sleepStages.map((stage) => {
-          switch (stage.stage) {
-            case "light":
-              return "浅睡眠";
-            case "deep":
-              return "深睡眠";
-            case "rem":
-              return "REM睡眠";
-            default:
-              return null;
+  // 渲染空状态
+  const renderEmptyState = () => {
+    if (!currentDevice) {
+      return (
+        <Empty
+          description={
+            <div className={styles.emptyText}>
+              <p>您还未绑定任何设备</p>
+              <p>请前往个人中心绑定设备后查看数据</p>
+            </div>
           }
-        }),
-        lineStyle: { color: "#36A2EB" },
-      },
-    ],
+        />
+      );
+    }
+
+    if (loading) {
+      return null; // 加载中不显示空状态
+    }
+
+    return (
+      <Empty
+        description={
+          <div className={styles.emptyText}>
+            <p>暂无睡眠数据</p>
+            <p>请选择其他日期查看</p>
+          </div>
+        }
+      />
+    );
   };
-
-  // 体动检测柱状图配置
-  const activityOption = {
-    tooltip: {
-      trigger: "axis",
-    },
-    xAxis: {
-      type: "value",
-      max: roundUp(sleepData?.activityData.inactiveTime || 0, 100),
-    },
-    yAxis: {
-      type: "category",
-      data: ["不活跃时长", "体动总时长", "体位改变时长", "身体变动时长"],
-    },
-    series: [
-      {
-        type: "bar",
-        data: [
-          {
-            value: sleepData?.activityData.inactiveTime,
-            itemStyle: { color: "#B39DDB" },
-          },
-          {
-            value: sleepData?.activityData.activeTime,
-            itemStyle: { color: "#FFB74D" },
-          },
-          {
-            value: sleepData?.activityData.positionChangeTime,
-            itemStyle: { color: "#4FC3F7" },
-          },
-          {
-            value: sleepData?.activityData.bodyMovementTime,
-            itemStyle: { color: "#FF8A65" },
-          },
-        ],
-      },
-    ],
-  };
-
-  if (loading) {
-    return <Card loading={true} />;
-  }
-
-  if (!sleepData) {
-    return <Card>暂无数据</Card>;
-  }
 
   return (
-    <div>
-      <Card
-        title="睡眠数据"
-        extra={
-          <DatePicker
-            value={selectedDate}
-            onChange={handleDateChange}
-            disabledDate={(current) => current && current.isAfter(dayjs())}
-          />
-        }
-        className={styles.sleepCard}
-      >
-        <Row gutter={[16, 16]}>
-          <Col span={24}>
-            <Card className={styles.header}>
-              <h3 className={styles.timeRange}>
-                夜间睡眠时长 {sleepData.sleepTime} ~ {sleepData.wakeTime}
-              </h3>
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Card className={styles.statsCard}>
-                    <div className={styles.title}>睡眠质量评分</div>
-                    <Statistic
-                      value={sleepData.sleepScore}
-                      suffix="/100"
-                      valueStyle={{ color: "#1890ff", fontSize: "24px" }}
+    <div className={styles.sleepContainer}>
+      <Space direction="vertical" size="large" style={{ width: "100%" }}>
+        {/* 日期选择器卡片 */}
+        <Card
+          title="睡眠数据"
+          extra={
+            <DatePicker
+              value={selectedDate}
+              onChange={handleDateChange}
+              disabledDate={(current) => current && current.isAfter(dayjs())}
+              allowClear={false}
+            />
+          }
+        >
+          {loading ? (
+            <div className={styles.loadingContainer}>
+              <Spin size="large" />
+            </div>
+          ) : !sleepData ? (
+            renderEmptyState()
+          ) : (
+            <Row gutter={[16, 16]} className={styles.statsRow}>
+              <Col span={6}>
+                <Statistic
+                  title={
+                    <Space>
+                      <StarFilled style={{ color: "#1890ff" }} />
+                      睡眠评分
+                    </Space>
+                  }
+                  value={sleepData.sleep_quality_score}
+                  suffix="/ 100"
+                  valueStyle={{ color: "#1890ff" }}
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic
+                  title={
+                    <Space>
+                      <ClockCircleFilled style={{ color: "#52c41a" }} />
+                      入睡时间
+                    </Space>
+                  }
+                  value={dayjs(sleepData.sleep_start_time * 1000).format(
+                    "HH:mm"
+                  )}
+                  valueStyle={{ color: "#52c41a" }}
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic
+                  title={
+                    <Space>
+                      <RiseOutlined style={{ color: "#722ed1" }} />
+                      醒来时间
+                    </Space>
+                  }
+                  value={dayjs(sleepData.sleep_end_time * 1000).format("HH:mm")}
+                  valueStyle={{ color: "#722ed1" }}
+                />
+              </Col>
+              <Col span={6}>
+                <Statistic
+                  title={
+                    <Space>
+                      <FieldTimeOutlined style={{ color: "#fa8c16" }} />
+                      总睡眠时长
+                    </Space>
+                  }
+                  value={`${Math.floor(
+                    sleepData.sleep_summary_data.total_sleep_duration_minutes /
+                      60
+                  )}小时${
+                    sleepData.sleep_summary_data.total_sleep_duration_minutes %
+                    60
+                  }分钟`}
+                  valueStyle={{ color: "#fa8c16" }}
+                />
+              </Col>
+            </Row>
+          )}
+        </Card>
+
+        {!loading && sleepData && (
+          <>
+            {/* 睡眠分析卡片 */}
+            <Card title="睡眠分析">
+              <Row gutter={[24, 24]}>
+                <Col span={24}>
+                  <Card
+                    title={
+                      <Space>
+                        <span className={styles.cardIcon}>📈</span>
+                        睡眠阶段变化
+                      </Space>
+                    }
+                    bordered={false}
+                  >
+                    <ReactECharts
+                      option={getSleepStageOption(sleepData)}
+                      style={{ height: "400px" }}
                     />
                   </Card>
                 </Col>
-                <Col span={12}>
-                  <Card className={styles.statsCard}>
-                    <div className={styles.title}>总睡眠时长</div>
-                    <Statistic
-                      value={sleepData.totalSleepTime}
-                      valueStyle={{ color: "#52c41a", fontSize: "24px" }}
-                    />
+                <Col span={16}>
+                  <Card
+                    title={
+                      <Space>
+                        <span className={styles.cardIcon}>🌙</span>
+                        睡眠时长分布
+                      </Space>
+                    }
+                    bordered={false}
+                  >
+                    <div className={styles.sleepSummaryContainer}>
+                      <div className={styles.awakeCount}>
+                        <Statistic
+                          title="清醒次数"
+                          value={sleepData.sleep_summary_data.awake_time}
+                          suffix="次"
+                        />
+                      </div>
+                      <ReactECharts
+                        option={getSleepSummaryOption(sleepData)}
+                        style={{ height: "400px" }}
+                      />
+                    </div>
+                  </Card>
+                </Col>
+                <Col span={8}>
+                  <Card
+                    title={
+                      <Space>
+                        <span className={styles.cardIcon}>🫁</span>
+                        呼吸频率监测
+                      </Space>
+                    }
+                    bordered={false}
+                  >
+                    <Space
+                      direction="vertical"
+                      size="large"
+                      style={{ width: "100%" }}
+                    >
+                      <Statistic
+                        title={
+                          <Space>
+                            <span className={styles.cardIcon}>⬇️</span>
+                            最低呼吸率
+                          </Space>
+                        }
+                        value={sleepData.respiratory_rate.minimum_bpm}
+                        suffix="次/分钟"
+                        valueStyle={{ color: "#3f8600" }}
+                      />
+                      <Statistic
+                        title={
+                          <Space>
+                            <span className={styles.cardIcon}>➖</span>
+                            平均呼吸率
+                          </Space>
+                        }
+                        value={sleepData.respiratory_rate.average_bpm}
+                        suffix="次/分钟"
+                        valueStyle={{ color: "#1890ff" }}
+                      />
+                      <Statistic
+                        title={
+                          <Space>
+                            <span className={styles.cardIcon}>⬆️</span>
+                            最高呼吸率
+                          </Space>
+                        }
+                        value={sleepData.respiratory_rate.maximum_bpm}
+                        suffix="次/分钟"
+                        valueStyle={{ color: "#cf1322" }}
+                      />
+                    </Space>
                   </Card>
                 </Col>
               </Row>
             </Card>
-          </Col>
 
-          <Col span={12}>
-            <Card title="睡眠结构" className={styles.chartCard}>
-              <div className={styles.chart}>
-                <ReactECharts option={pieOption} style={{ height: "100%" }} />
-              </div>
+            {/* 睡眠建议卡片 */}
+            <Card title="睡眠建议">
+              <List
+                dataSource={sleepData.sleep_suggestion}
+                renderItem={(item) => (
+                  <List.Item>
+                    <div style={{ whiteSpace: "pre-wrap" }}>{item}</div>
+                  </List.Item>
+                )}
+              />
             </Card>
-          </Col>
-
-          <Col span={12}>
-            <Card title="睡眠阶段" className={styles.chartCard}>
-              <div className={styles.chart}>
-                <ReactECharts
-                  option={stagesOption}
-                  style={{ height: "100%" }}
-                />
-              </div>
-            </Card>
-          </Col>
-
-          <Col span={24}>
-            <Card title="呼吸频率(次/分钟)" className={styles.rateCard}>
-              <Row gutter={16}>
-                <Col span={8}>
-                  <div className={styles.rateTitle}>最大</div>
-                  <Statistic
-                    value={sleepData.breathingRate.max}
-                    suffix="bpm"
-                    valueStyle={{ color: "#cf1322" }}
-                    className={styles.rateValue}
-                  />
-                </Col>
-                <Col span={8}>
-                  <div className={styles.rateTitle}>平均</div>
-                  <Statistic
-                    value={sleepData.breathingRate.avg}
-                    suffix="bpm"
-                    valueStyle={{ color: "#3f8600" }}
-                    className={styles.rateValue}
-                  />
-                </Col>
-                <Col span={8}>
-                  <div className={styles.rateTitle}>最小</div>
-                  <Statistic
-                    value={sleepData.breathingRate.min}
-                    suffix="bpm"
-                    valueStyle={{ color: "#096dd9" }}
-                    className={styles.rateValue}
-                  />
-                </Col>
-              </Row>
-            </Card>
-          </Col>
-
-          <Col span={24}>
-            <Card title="心率(次/分钟)" className={styles.rateCard}>
-              <Row gutter={16}>
-                <Col span={8}>
-                  <div className={styles.rateTitle}>最大</div>
-                  <Statistic
-                    value={sleepData.heartRate.max}
-                    suffix="bpm"
-                    valueStyle={{ color: "#cf1322" }}
-                    className={styles.rateValue}
-                  />
-                </Col>
-                <Col span={8}>
-                  <div className={styles.rateTitle}>平均</div>
-                  <Statistic
-                    value={sleepData.heartRate.avg}
-                    suffix="bpm"
-                    valueStyle={{ color: "#3f8600" }}
-                    className={styles.rateValue}
-                  />
-                </Col>
-                <Col span={8}>
-                  <div className={styles.rateTitle}>最小</div>
-                  <Statistic
-                    value={sleepData.heartRate.min}
-                    suffix="bpm"
-                    valueStyle={{ color: "#096dd9" }}
-                    className={styles.rateValue}
-                  />
-                </Col>
-              </Row>
-            </Card>
-          </Col>
-
-          <Col span={24}>
-            <Card title="体动检测" className={styles.chartCard}>
-              <div className={styles.chart}>
-                <ReactECharts
-                  option={activityOption}
-                  style={{ height: "100%" }}
-                />
-              </div>
-            </Card>
-          </Col>
-
-          <Col span={24}>
-            <Card title="总结与建议" className={styles.summaryCard}>
-              <p>
-                您的总睡眠时长为{sleepData.totalSleepTime}
-                ，符合成年人推荐的7-9小时标准。继续保持良好的作息习惯。
-              </p>
-              <p>
-                深睡眠时长为{sleepData.sleepStructure.deepSleep}
-                分钟，符合推荐时长。继续保持良好的睡眠习惯。
-              </p>
-              <p>
-                REM睡眠时长为{sleepData.sleepStructure.remSleep}
-                分钟，良好。继续保持充足的睡眠，帮助身体恢复和记忆巩固。
-              </p>
-              <p>
-                呼吸频率为{sleepData.breathingRate.avg}
-                次/分钟，略高于或低于正常范围。建议保持规律的锻炼，保持健康的生活方式，若有异常，请及时咨询医生。
-              </p>
-              <p>
-                呼吸频率在正常范围内，表明您的睡眠状态良好。继续保持健康生活方式。
-              </p>
-              <p>
-                体动时长为{sleepData.activityData.activeTime}
-                分钟，属于轻度活动。可能会影响睡眠质量。建议检查床垫、枕头是否合适，尽量减少睡眠中的体动。
-              </p>
-            </Card>
-          </Col>
-        </Row>
-      </Card>
+          </>
+        )}
+      </Space>
     </div>
   );
 };
