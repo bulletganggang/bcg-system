@@ -8,12 +8,16 @@ import {
   Statistic,
   Empty,
   Spin,
+  Alert,
 } from "antd";
 import {
   LineChartOutlined,
   ClockCircleOutlined,
   RiseOutlined,
-  CheckCircleOutlined,
+  FieldTimeOutlined,
+  CalendarOutlined,
+  BarChartOutlined,
+  BulbOutlined,
 } from "@ant-design/icons";
 import ReactECharts from "echarts-for-react";
 import dayjs, { Dayjs } from "dayjs";
@@ -28,6 +32,9 @@ import {
   getSleepDurationStats,
   getSleepTimeStats,
   getWakeUpTimeStats,
+  getSleepRegularityStats,
+  getSleepCycleStats,
+  getSleepAdvice,
 } from "@/configs/charts/analysis";
 import { getExportConfig, getExportFileName } from "@/utils/pdf-sheet-export";
 import ExportButton from "@/components/ExportButton";
@@ -167,6 +174,37 @@ const Analysis: React.FC = () => {
     return null;
   };
 
+  // 渲染睡眠建议
+  const renderSleepAdvice = () => {
+    if (!analysisData) return null;
+
+    const advices = getSleepAdvice(analysisData);
+
+    return (
+      <Card
+        className={styles.chartCard}
+        title={
+          <div>
+            <BulbOutlined /> 个性化睡眠建议
+          </div>
+        }
+      >
+        <div className={styles.adviceContainer}>
+          {advices.map((advice, index) => (
+            <Alert
+              key={index}
+              message={advice.title}
+              description={advice.content}
+              type={advice.type}
+              showIcon
+              className={styles.adviceItem}
+            />
+          ))}
+        </div>
+      </Card>
+    );
+  };
+
   return (
     <div className={styles.analysisCard}>
       <Card
@@ -249,7 +287,7 @@ const Analysis: React.FC = () => {
                   <Statistic
                     title={
                       <div>
-                        <CheckCircleOutlined /> 平均睡眠时长
+                        <FieldTimeOutlined /> 平均睡眠时长
                       </div>
                     }
                     value={`${Math.floor(
@@ -262,6 +300,9 @@ const Analysis: React.FC = () => {
                 </Card>
               </Col>
             </Row>
+
+            {/* 个性化睡眠建议 */}
+            {renderSleepAdvice()}
 
             <Card className={`${styles.chartCard} ${styles.mainChart}`}>
               <div className={styles.chartContainer}>
@@ -327,6 +368,95 @@ const Analysis: React.FC = () => {
                       {Math.floor(analysisData.min_sleep_duration_time! / 60)}
                       小时
                       {analysisData.min_sleep_duration_time! % 60}分钟
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* 睡眠规律性分析 */}
+            <Card
+              className={styles.chartCard}
+              title={
+                <div>
+                  <CalendarOutlined /> 睡眠规律性分析
+                </div>
+              }
+            >
+              <div className={styles.chartContainer}>
+                <div className={styles.chart}>
+                  <ReactECharts
+                    option={getSleepRegularityStats(analysisData)}
+                    style={{ height: "400px" }}
+                    opts={{ renderer: "svg" }}
+                  />
+                </div>
+                <div className={styles.statsPanel}>
+                  {analysisData.sleep_time_distribute_list &&
+                    analysisData.sleep_time_distribute_list.length > 0 && (
+                      <>
+                        <div className={styles.statItem}>
+                          <div className={styles.label}>入睡规律性</div>
+                          <div className={styles.value}>
+                            {
+                              getSleepRegularityStats(analysisData).regularity
+                                ?.sleepRegularityLevel
+                            }
+                          </div>
+                        </div>
+                        <div className={styles.statItem}>
+                          <div className={styles.label}>起床规律性</div>
+                          <div className={styles.value}>
+                            {
+                              getSleepRegularityStats(analysisData).regularity
+                                ?.wakeUpRegularityLevel
+                            }
+                          </div>
+                        </div>
+                        <div className={styles.statItem}>
+                          <div className={styles.label}>社交时差</div>
+                          <div className={styles.value}>
+                            {getSleepRegularityStats(
+                              analysisData
+                            ).regularity?.socialJetLag.toFixed(1)}
+                            小时
+                          </div>
+                        </div>
+                      </>
+                    )}
+                </div>
+              </div>
+            </Card>
+
+            {/* 睡眠周期图 */}
+            <Card
+              className={styles.chartCard}
+              title={
+                <div>
+                  <BarChartOutlined /> 睡眠周期图
+                </div>
+              }
+            >
+              <div className={styles.chartContainer}>
+                <div className={styles.chart}>
+                  <ReactECharts
+                    option={getSleepCycleStats(analysisData)}
+                    style={{ height: "400px" }}
+                    opts={{ renderer: "svg" }}
+                  />
+                </div>
+                <div className={styles.statsPanel}>
+                  <div className={styles.statItem}>
+                    <div className={styles.label}>周期说明</div>
+                    <div
+                      className={styles.value}
+                      style={{
+                        fontSize: "14px",
+                        fontWeight: "normal",
+                        color: "rgba(0, 0, 0, 0.65)",
+                      }}
+                    >
+                      此图展示了您的睡眠-起床周期，红色背景区域表示周末。您可以观察工作日和周末的睡眠模式差异。
                     </div>
                   </div>
                 </div>

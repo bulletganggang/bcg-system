@@ -204,6 +204,24 @@
   }
 }
 
+// 睡眠建议样式
+.adviceContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  .adviceItem {
+    margin-bottom: 0;
+    border-radius: 4px;
+    transition: all 0.3s;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
 @media screen and (max-width: 768px) {
   .statsRow {
     .ant-col {
@@ -216,6 +234,12 @@
 
     .statsPanel {
       width: 100% !important;
+    }
+  }
+
+  .adviceContainer {
+    .adviceItem {
+      margin-bottom: 16px;
     }
   }
 }
