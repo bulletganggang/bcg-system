@@ -1,97 +1,216 @@
-import { format } from "date-fns";
+import dayjs from "dayjs";
+import { AnalysisData, ReportType } from "../../types/analysis";
 
-// 导出数据的类型定义
+/**
+ * 导出表格接口
+ */
 export interface ExportSheet {
   name: string;
   data: Record<string, any>[];
 }
 
+/**
+ * 导出数据接口
+ */
 export interface ExportData {
   sheets: ExportSheet[];
 }
 
-interface AnalysisData {
-  date: string;
-  sleepScore: number;
-  sleepStages: {
-    lightSleep: number;
-    deepSleep: number;
-    remSleep: number;
-  };
-  sleepTime: string;
-  wakeTime: string;
-}
-
-interface AnomalyStats {
-  sleepQualityAnomalies: number;
-  sleepDurationAnomalies: number;
-  sleepPatternAnomalies: number;
-}
+/**
+ * 安全获取时间戳格式化字符串
+ * @param timestamp 时间戳（秒）
+ * @param format 格式化字符串
+ * @param defaultValue 默认值
+ * @returns 格式化后的字符串
+ */
+const safeFormatTime = (
+  timestamp: number | undefined | null,
+  format: string,
+  defaultValue: string = "无数据"
+): string => {
+  if (!timestamp || isNaN(timestamp)) return defaultValue;
+  try {
+    return dayjs(timestamp * 1000).format(format);
+  } catch (error) {
+    console.error("时间格式化错误:", error);
+    return defaultValue;
+  }
+};
 
 /**
- * 获取导出文件的配置
+ * 安全计算分钟数
+ * @param seconds 秒数
+ * @param defaultValue 默认值
+ * @returns 分钟数字符串
+ */
+const safeCalculateMinutes = (
+  seconds: number | undefined | null,
+  defaultValue: string = "0分钟"
+): string => {
+  if (!seconds || isNaN(seconds)) return defaultValue;
+  try {
+    return `${Math.round(seconds / 60)}分钟`;
+  } catch (error) {
+    console.error("分钟计算错误:", error);
+    return defaultValue;
+  }
+};
+
+/**
+ * 获取导出配置
  * @param analysisData 分析数据
- * @param anomalyStats 异常统计数据
- * @returns 导出数据配置
+ * @param reportType 报告类型
+ * @param dateRange 日期范围
+ * @returns 导出配置
  */
 export const getExportConfig = (
-  analysisData: AnalysisData[],
-  anomalyStats: AnomalyStats
+  analysisData: AnalysisData | null,
+  reportType: ReportType,
+  dateRange: [string, string]
 ): ExportData => {
-  const totalAnomalies =
-    anomalyStats.sleepQualityAnomalies +
-    anomalyStats.sleepDurationAnomalies +
-    anomalyStats.sleepPatternAnomalies;
+  if (!analysisData) {
+    return { sheets: [] };
+  }
 
-  const totalChecks = analysisData.length * 3; // 每天三个检查项
+  const [startDate, endDate] = dateRange;
+  const dateRangeText = `${startDate} 至 ${endDate}`;
+
+  // 睡眠评分数据
+  const sleepScoreData =
+    analysisData.sleep_score_list?.map((score, index) => {
+      const timestamp = analysisData.timestamp_list?.[index] || 0;
+      return {
+        日期: safeFormatTime(timestamp, "YYYY-MM-DD"),
+        睡眠评分: score || 0,
+      };
+    }) || [];
+
+  // 睡眠阶段数据
+  const sleepStageData =
+    analysisData.sleep_stage_time_list?.map((stage, index) => {
+      const timestamp = analysisData.timestamp_list?.[index] || 0;
+      const lightSleep = stage?.light_sleep_overall_minutes || 0;
+      const deepSleep = stage?.deep_sleep_overall_minutes || 0;
+      const remSleep = stage?.rem_sleep_overall_minutes || 0;
+      const totalSleep = lightSleep + deepSleep + remSleep;
+
+      return {
+        日期: safeFormatTime(timestamp, "YYYY-MM-DD"),
+        浅睡眠时长: `${lightSleep}分钟`,
+        深睡眠时长: `${deepSleep}分钟`,
+        REM睡眠时长: `${remSleep}分钟`,
+        总睡眠时长: `${totalSleep}分钟`,
+      };
+    }) || [];
+
+  // 睡眠时间分布数据
+  const sleepTimeData: Record<string, any>[] = [];
+
+  // 安全地处理睡眠时间分布数据
+  if (
+    analysisData.sleep_time_distribute_list &&
+    analysisData.sleep_time_distribute_list.length > 0
+  ) {
+    for (const [
+      startTime,
+      endTime,
+    ] of analysisData.sleep_time_distribute_list) {
+      if (startTime && endTime) {
+        const sleepDuration = endTime > startTime ? endTime - startTime : 0;
+
+        sleepTimeData.push({
+          日期: safeFormatTime(startTime, "YYYY-MM-DD"),
+          入睡时间: safeFormatTime(startTime, "HH:mm"),
+          起床时间: safeFormatTime(endTime, "HH:mm"),
+          睡眠时长: safeCalculateMinutes(sleepDuration),
+        });
+      }
+    }
+  }
+
+  // 统计数据
+  const statsData = [
+    {
+      指标: "平均睡眠评分",
+      数值: analysisData.avg_sleep_score || 0,
+    },
+    {
+      指标: "最高睡眠评分",
+      数值: analysisData.max_sleep_score || 0,
+    },
+    {
+      指标: "最低睡眠评分",
+      数值: analysisData.min_sleep_score || 0,
+    },
+    {
+      指标: "平均睡眠时长",
+      数值: `${analysisData.avg_sleep_duration_time || 0}分钟`,
+    },
+    {
+      指标: "最长睡眠时长",
+      数值: `${analysisData.max_sleep_duration_time || 0}分钟`,
+    },
+    {
+      指标: "最短睡眠时长",
+      数值: `${analysisData.min_sleep_duration_time || 0}分钟`,
+    },
+    {
+      指标: "平均入睡时间",
+      数值: analysisData.avg_start_sleep_time || "无数据",
+    },
+    {
+      指标: "最早入睡时间",
+      数值: analysisData.earliest_sleep_time || "无数据",
+    },
+    {
+      指标: "平均起床时间",
+      数值: analysisData.avg_wakeUp_time || "无数据",
+    },
+    {
+      指标: "最晚起床时间",
+      数值: analysisData.latest_wakeUp_time || "无数据",
+    },
+  ];
+
+  // 设备信息
+  const deviceInfo = {
+    分析周期: dateRangeText,
+    设备类型: analysisData.device_type || "未知",
+    设备编码: analysisData.device_code || "未知",
+    报告类型: reportType === "weekly" ? "周报" : "月报",
+    生成时间: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+  };
 
   return {
     sheets: [
       {
-        name: "睡眠数据",
-        data: analysisData.map((item) => ({
-          日期: item.date,
-          睡眠评分: item.sleepScore,
-          浅睡眠时长: `${item.sleepStages.lightSleep}分钟`,
-          深睡眠时长: `${item.sleepStages.deepSleep}分钟`,
-          REM睡眠时长: `${item.sleepStages.remSleep}分钟`,
-          总睡眠时长: `${
-            item.sleepStages.lightSleep +
-            item.sleepStages.deepSleep +
-            item.sleepStages.remSleep
-          }分钟`,
-          入睡时间: item.sleepTime,
-          起床时间: item.wakeTime,
-        })),
+        name: `睡眠数据分析(${reportType === "weekly" ? "周报" : "月报"})`,
+        data: [deviceInfo],
       },
       {
-        name: "异常统计",
-        data: [
-          {
-            指标: "睡眠质量异常",
-            数值: anomalyStats.sleepQualityAnomalies,
-          },
-          {
-            指标: "睡眠时长异常",
-            数值: anomalyStats.sleepDurationAnomalies,
-          },
-          {
-            指标: "睡眠规律异常",
-            数值: anomalyStats.sleepPatternAnomalies,
-          },
-          {
-            指标: "异常总数",
-            数值: totalAnomalies,
-          },
-          {
-            指标: "检查项总数",
-            数值: totalChecks,
-          },
-          {
-            指标: "异常率",
-            数值: `${((totalAnomalies / totalChecks) * 100).toFixed(2)}%`,
-          },
-        ],
+        name: "睡眠评分",
+        data:
+          sleepScoreData.length > 0
+            ? sleepScoreData
+            : [{ 提示: "暂无睡眠评分数据" }],
+      },
+      {
+        name: "睡眠阶段",
+        data:
+          sleepStageData.length > 0
+            ? sleepStageData
+            : [{ 提示: "暂无睡眠阶段数据" }],
+      },
+      {
+        name: "睡眠时间",
+        data:
+          sleepTimeData.length > 0
+            ? sleepTimeData
+            : [{ 提示: "暂无睡眠时间数据" }],
+      },
+      {
+        name: "统计数据",
+        data: statsData,
       },
     ],
   };
@@ -100,26 +219,22 @@ export const getExportConfig = (
 /**
  * 获取导出文件名
  * @param selectedDate 选择的日期
- * @param analysisType 分析类型（'weekly' | 'monthly'）
- * @returns 格式化的文件名前缀
+ * @param reportType 报告类型
+ * @returns 文件名
  */
 export const getExportFileName = (
-  selectedDate: Date,
-  analysisType: "weekly" | "monthly"
+  selectedDate: dayjs.Dayjs,
+  reportType: ReportType
 ): string => {
-  if (analysisType === "weekly") {
-    // 获取所选周的起始日期
-    const startDate = new Date(selectedDate);
-    startDate.setDate(startDate.getDate() - startDate.getDay());
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 6);
+  if (!selectedDate || !selectedDate.isValid()) {
+    return `睡眠数据分析_${dayjs().format("YYYY-MM-DD")}`;
+  }
 
-    return `睡眠分析报告_${format(startDate, "yyyy-MM-dd")} ~ ${format(
-      endDate,
-      "yyyy-MM-dd"
-    )}`;
-  } else {
-    // 月度报告
-    return `睡眠分析报告_${format(selectedDate, "yyyy-MM")}`;
+  try {
+    const dateFormat = reportType === "weekly" ? "YYYY-[W]ww" : "YYYY-MM";
+    return `睡眠数据分析_${selectedDate.format(dateFormat)}`;
+  } catch (error) {
+    console.error("文件名生成错误:", error);
+    return `睡眠数据分析_${dayjs().format("YYYY-MM-DD")}`;
   }
 };

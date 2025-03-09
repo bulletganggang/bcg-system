@@ -14,25 +14,16 @@ interface ExportButtonProps {
       data: Record<string, any>[];
     }[];
   };
-  // 导出 PDF 时要截图的元素的选择器
-  pdfTargetSelector?: string;
   // 文件名前缀
   fileNamePrefix?: string;
   // 按钮是否禁用
   disabled?: boolean;
-  // 导出成功的回调
-  onExportSuccess?: () => void;
-  // 导出失败的回调
-  onExportError?: (error: Error) => void;
 }
 
 const ExportButton: React.FC<ExportButtonProps> = ({
   excelData,
-  pdfTargetSelector,
   fileNamePrefix = "导出文件",
   disabled = false,
-  onExportSuccess,
-  onExportError,
 }) => {
   const [exporting, setExporting] = useState(false);
 
@@ -40,7 +31,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
   const exportToExcel = async () => {
     if (!excelData) {
       message.error("导出数据不能为空！");
-      return;
+      return false;
     }
 
     try {
@@ -49,20 +40,22 @@ const ExportButton: React.FC<ExportButtonProps> = ({
 
       // 添加所有工作表
       excelData.sheets.forEach(({ name, data }) => {
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        XLSX.utils.book_append_sheet(workbook, worksheet, name);
+        if (data && data.length > 0) {
+          const worksheet = XLSX.utils.json_to_sheet(data);
+          XLSX.utils.book_append_sheet(workbook, worksheet, name);
+        }
       });
 
       // 导出文件
       const fileName = `${fileNamePrefix}.xlsx`;
       XLSX.writeFile(workbook, fileName);
       message.success("Excel导出成功！");
-      onExportSuccess?.();
+      return true;
     } catch (error) {
       const err = error as Error;
-      message.error("Excel导出失败，请重试！");
+      message.error(`Excel导出失败: ${err.message}`);
       console.error("Excel导出错误:", err);
-      onExportError?.(err);
+      return false;
     } finally {
       setExporting(false);
     }
@@ -70,25 +63,39 @@ const ExportButton: React.FC<ExportButtonProps> = ({
 
   // 导出 PDF
   const exportToPDF = async () => {
-    if (!pdfTargetSelector) {
-      message.error("未指定要导出的内容！");
-      return;
-    }
-
     try {
       setExporting(true);
-      const element = document.querySelector(pdfTargetSelector) as HTMLElement;
-      if (!element) {
-        throw new Error("未找到要导出的内容");
+
+      // 获取整个页面内容
+      const contentElement = document.querySelector(
+        ".ant-layout-content"
+      ) as HTMLElement;
+      if (!contentElement) {
+        message.error("未找到页面内容");
+        return false;
       }
 
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        logging: false,
+      // 临时调整样式以优化PDF导出
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "visible";
+
+      // 等待图表完全渲染
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // 创建canvas
+      const canvas = await html2canvas(contentElement, {
+        scale: 1.5,
         useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        windowWidth: contentElement.scrollWidth,
+        windowHeight: contentElement.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL("image/jpeg", 1.0);
+      // 恢复原始样式
+      document.body.style.overflow = originalOverflow;
+
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
@@ -98,32 +105,65 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+      // 如果内容高度超过一页，分页处理
+      if (pdfHeight > pdf.internal.pageSize.getHeight()) {
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        let heightLeft = pdfHeight;
+        let position = 0;
+        let pageNumber = 1;
+
+        while (heightLeft > 0) {
+          if (pageNumber > 1) {
+            pdf.addPage();
+          }
+
+          pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight);
+
+          heightLeft -= pageHeight;
+          position -= pageHeight;
+          pageNumber++;
+        }
+      } else {
+        pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+      }
+
       pdf.save(`${fileNamePrefix}.pdf`);
       message.success("PDF导出成功！");
-      onExportSuccess?.();
+      return true;
     } catch (error) {
       const err = error as Error;
-      message.error("PDF导出失败，请重试！");
+      message.error(`PDF导出失败: ${err.message}`);
       console.error("PDF导出错误:", err);
-      onExportError?.(err);
+      return false;
     } finally {
       setExporting(false);
     }
   };
 
-  // 一键导出
+  // 导出全部
   const exportAll = async () => {
     try {
       setExporting(true);
-      await exportToExcel();
-      await exportToPDF();
-      message.success("所有文件导出成功！");
-      onExportSuccess?.();
+
+      // 先导出Excel
+      const excelSuccess = await exportToExcel();
+
+      // 再导出PDF
+      const pdfSuccess = await exportToPDF();
+
+      if (excelSuccess && pdfSuccess) {
+        message.success("所有数据导出成功！");
+      } else if (excelSuccess) {
+        message.warning("Excel导出成功，但PDF导出失败");
+      } else if (pdfSuccess) {
+        message.warning("PDF导出成功，但Excel导出失败");
+      } else {
+        message.error("所有导出均失败，请重试");
+      }
     } catch (error) {
       const err = error as Error;
-      console.error("一键导出错误:", err);
-      onExportError?.(err);
+      message.error(`导出过程中发生错误: ${err.message}`);
+      console.error("导出全部错误:", err);
     } finally {
       setExporting(false);
     }
@@ -143,14 +183,13 @@ const ExportButton: React.FC<ExportButtonProps> = ({
       label: "导出PDF",
       icon: <DownloadOutlined />,
       onClick: exportToPDF,
-      disabled: !pdfTargetSelector,
     },
     {
       key: "all",
       label: "导出全部",
       icon: <DownloadOutlined />,
       onClick: exportAll,
-      disabled: !excelData || !pdfTargetSelector,
+      disabled: !excelData,
     },
   ];
 
