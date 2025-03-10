@@ -1,5 +1,7 @@
 import dayjs from "dayjs";
 import { AnalysisData, ReportType } from "../../types/analysis";
+import { getSleepAdvice } from "../../configs/charts/analysis/sleepAdvice";
+import { getSleepRegularityStats } from "../../configs/charts/analysis/sleepRegularity";
 
 /**
  * 导出表格接口
@@ -181,6 +183,75 @@ export const getExportConfig = (
     生成时间: dayjs().format("YYYY-MM-DD HH:mm:ss"),
   };
 
+  // 个性化睡眠建议数据
+  const sleepAdviceData = getSleepAdvice(analysisData).map((advice, index) => {
+    return {
+      序号: index + 1,
+      建议类型: (() => {
+        switch (advice.type) {
+          case "success":
+            return "优秀";
+          case "info":
+            return "提示";
+          case "warning":
+            return "警告";
+          case "error":
+            return "严重";
+          default:
+            return "提示";
+        }
+      })(),
+      建议标题: advice.title,
+      建议内容: advice.content,
+    };
+  });
+
+  // 睡眠规律性分析数据
+  const regularityStats = getSleepRegularityStats(analysisData);
+  const sleepRegularityData = regularityStats.regularity
+    ? [
+        {
+          指标: "入睡时间规律性",
+          数值: regularityStats.regularity.sleepRegularityLevel,
+          标准差: `${regularityStats.regularity.sleepTimeSD.toFixed(2)}小时`,
+        },
+        {
+          指标: "起床时间规律性",
+          数值: regularityStats.regularity.wakeUpRegularityLevel,
+          标准差: `${regularityStats.regularity.wakeUpTimeSD.toFixed(2)}小时`,
+        },
+        {
+          指标: "社交时差",
+          数值: `${regularityStats.regularity.socialJetLag.toFixed(1)}小时`,
+          说明: "工作日和周末起床时间的差异",
+        },
+      ]
+    : [{ 提示: "暂无睡眠规律性数据" }];
+
+  // 工作日与周末睡眠对比数据
+  const workdayWeekendData = regularityStats.regularity
+    ? [
+        {
+          类型: "工作日",
+          平均入睡时间: regularityStats.series[0].data[0]
+            ? formatHoursToTime(regularityStats.series[0].data[0] as number)
+            : "无数据",
+          平均起床时间: regularityStats.series[1].data[0]
+            ? formatHoursToTime(regularityStats.series[1].data[0] as number)
+            : "无数据",
+        },
+        {
+          类型: "周末",
+          平均入睡时间: regularityStats.series[0].data[1]
+            ? formatHoursToTime(regularityStats.series[0].data[1] as number)
+            : "无数据",
+          平均起床时间: regularityStats.series[1].data[1]
+            ? formatHoursToTime(regularityStats.series[1].data[1] as number)
+            : "无数据",
+        },
+      ]
+    : [{ 提示: "暂无工作日与周末睡眠对比数据" }];
+
   return {
     sheets: [
       {
@@ -212,6 +283,21 @@ export const getExportConfig = (
         name: "统计数据",
         data: statsData,
       },
+      {
+        name: "个性化睡眠建议",
+        data:
+          sleepAdviceData.length > 0
+            ? sleepAdviceData
+            : [{ 提示: "暂无睡眠建议数据" }],
+      },
+      {
+        name: "睡眠规律性分析",
+        data: sleepRegularityData,
+      },
+      {
+        name: "工作日与周末对比",
+        data: workdayWeekendData,
+      },
     ],
   };
 };
@@ -237,4 +323,19 @@ export const getExportFileName = (
     console.error("文件名生成错误:", error);
     return `睡眠数据分析_${dayjs().format("YYYY-MM-DD")}`;
   }
+};
+
+/**
+ * 格式化小时数为时间字符串
+ * @param hours 小时数（带小数点）
+ * @returns 格式化后的时间字符串 (HH:mm)
+ */
+const formatHoursToTime = (hours: number): string => {
+  const adjustedHours = hours >= 24 ? hours - 24 : hours;
+  const hoursPart = Math.floor(adjustedHours);
+  const minutesPart = Math.round((adjustedHours - hoursPart) * 60);
+  return `${String(hoursPart).padStart(2, "0")}:${String(minutesPart).padStart(
+    2,
+    "0"
+  )}`;
 };
