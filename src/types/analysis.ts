@@ -4,6 +4,8 @@
 export interface AnalysisData {
   /** 最晚醒来时间 */
   latest_wakeUp_time?: string;
+  /** 最早起床时间 */
+  earliest_wakeUp_time?: string;
   /** 时间戳列表 */
   timestamp_list?: number[];
   /** 设备类型 */
@@ -41,6 +43,8 @@ export interface AnalysisData {
   avg_start_sleep_time?: string;
   /** 最早入睡时间 */
   earliest_sleep_time?: string;
+  /** 最晚入睡时间 */
+  latest_sleep_time?: string;
 }
 
 /**

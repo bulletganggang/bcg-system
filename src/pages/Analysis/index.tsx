@@ -328,7 +328,7 @@ const Analysis: React.FC = () => {
                   </div>
                   <div className={styles.statItem}>
                     <div className={styles.label}>最低评分</div>
-                    <div className={styles.value} style={{ color: "#ff4d4f" }}>
+                    <div className={styles.value} style={{ color: "#fa8c16" }}>
                       {analysisData.min_sleep_score}
                     </div>
                   </div>
@@ -364,7 +364,7 @@ const Analysis: React.FC = () => {
                   </div>
                   <div className={styles.statItem}>
                     <div className={styles.label}>最短时间</div>
-                    <div className={styles.value} style={{ color: "#ff4d4f" }}>
+                    <div className={styles.value} style={{ color: "#fa8c16" }}>
                       {Math.floor(analysisData.min_sleep_duration_time! / 60)}
                       小时
                       {analysisData.min_sleep_duration_time! % 60}分钟
@@ -397,7 +397,10 @@ const Analysis: React.FC = () => {
                       <>
                         <div className={styles.statItem}>
                           <div className={styles.label}>入睡规律性</div>
-                          <div className={styles.value}>
+                          <div
+                            className={styles.value}
+                            style={{ color: "#52c41a" }}
+                          >
                             {
                               getSleepRegularityStats(analysisData).regularity
                                 ?.sleepRegularityLevel
@@ -406,7 +409,10 @@ const Analysis: React.FC = () => {
                         </div>
                         <div className={styles.statItem}>
                           <div className={styles.label}>起床规律性</div>
-                          <div className={styles.value}>
+                          <div
+                            className={styles.value}
+                            style={{ color: "#1890ff" }}
+                          >
                             {
                               getSleepRegularityStats(analysisData).regularity
                                 ?.wakeUpRegularityLevel
@@ -415,7 +421,10 @@ const Analysis: React.FC = () => {
                         </div>
                         <div className={styles.statItem}>
                           <div className={styles.label}>社交时差</div>
-                          <div className={styles.value}>
+                          <div
+                            className={styles.value}
+                            style={{ color: "#fa8c16" }}
+                          >
                             {getSleepRegularityStats(
                               analysisData
                             ).regularity?.socialJetLag.toFixed(1)}
@@ -475,14 +484,20 @@ const Analysis: React.FC = () => {
                 <div className={styles.statsPanel}>
                   <div className={styles.statItem}>
                     <div className={styles.label}>最早入睡</div>
-                    <div className={styles.value}>
+                    <div className={styles.value} style={{ color: "#52c41a" }}>
                       {analysisData.earliest_sleep_time}
                     </div>
                   </div>
                   <div className={styles.statItem}>
                     <div className={styles.label}>平均入睡</div>
-                    <div className={styles.value}>
+                    <div className={styles.value} style={{ color: "#1890ff" }}>
                       {analysisData.avg_start_sleep_time}
+                    </div>
+                  </div>
+                  <div className={styles.statItem}>
+                    <div className={styles.label}>最晚入睡</div>
+                    <div className={styles.value} style={{ color: "#fa8c16" }}>
+                      {analysisData.latest_sleep_time}
                     </div>
                   </div>
                 </div>
@@ -500,15 +515,21 @@ const Analysis: React.FC = () => {
                 </div>
                 <div className={styles.statsPanel}>
                   <div className={styles.statItem}>
-                    <div className={styles.label}>最晚起床</div>
-                    <div className={styles.value}>
-                      {analysisData.latest_wakeUp_time}
+                    <div className={styles.label}>最早起床</div>
+                    <div className={styles.value} style={{ color: "#52c41a" }}>
+                      {analysisData.earliest_wakeUp_time}
                     </div>
                   </div>
                   <div className={styles.statItem}>
                     <div className={styles.label}>平均起床</div>
-                    <div className={styles.value}>
+                    <div className={styles.value} style={{ color: "#1890ff" }}>
                       {analysisData.avg_wakeUp_time}
+                    </div>
+                  </div>
+                  <div className={styles.statItem}>
+                    <div className={styles.label}>最晚起床</div>
+                    <div className={styles.value} style={{ color: "#fa8c16" }}>
+                      {analysisData.latest_wakeUp_time}
                     </div>
                   </div>
                 </div>

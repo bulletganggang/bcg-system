@@ -130,6 +130,22 @@ export const getExportConfig = (
     }
   }
 
+  // 睡眠时间概览数据
+  const sleepTimeOverviewData = [
+    {
+      类型: "入睡时间",
+      最早: analysisData.earliest_sleep_time || "无数据",
+      平均: analysisData.avg_start_sleep_time || "无数据",
+      最晚: analysisData.latest_sleep_time || "无数据",
+    },
+    {
+      类型: "起床时间",
+      最早: analysisData.earliest_wakeUp_time || "无数据",
+      平均: analysisData.avg_wakeUp_time || "无数据",
+      最晚: analysisData.latest_wakeUp_time || "无数据",
+    },
+  ];
+
   // 统计数据
   const statsData = [
     {
@@ -165,8 +181,16 @@ export const getExportConfig = (
       数值: analysisData.earliest_sleep_time || "无数据",
     },
     {
+      指标: "最晚入睡时间",
+      数值: analysisData.latest_sleep_time || "无数据",
+    },
+    {
       指标: "平均起床时间",
       数值: analysisData.avg_wakeUp_time || "无数据",
+    },
+    {
+      指标: "最早起床时间",
+      数值: analysisData.earliest_wakeUp_time || "无数据",
     },
     {
       指标: "最晚起床时间",
@@ -278,6 +302,10 @@ export const getExportConfig = (
           sleepTimeData.length > 0
             ? sleepTimeData
             : [{ 提示: "暂无睡眠时间数据" }],
+      },
+      {
+        name: "睡眠时间概览",
+        data: sleepTimeOverviewData,
       },
       {
         name: "统计数据",
