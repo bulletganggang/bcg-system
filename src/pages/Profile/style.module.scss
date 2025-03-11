@@ -148,4 +148,18 @@
       }
     }
   }
+
+  .securityCard {
+    margin-top: 24px;
+    margin-bottom: 24px;
+
+    :global {
+      .ant-btn {
+        height: 40px;
+        font-size: 16px;
+        min-width: 120px;
+        padding: 0 24px;
+      }
+    }
+  }
 }

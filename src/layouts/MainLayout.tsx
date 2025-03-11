@@ -1,17 +1,16 @@
-import React, { useEffect, useState } from "react";
-import { Layout, Menu, theme, Avatar, Dropdown, Modal, message } from "antd";
+import React, { useEffect } from "react";
+import { Layout, Menu, theme, Avatar } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   RestOutlined,
-  LogoutOutlined,
   AreaChartOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
-import { setUserInfo, clearUserInfo } from "../store/slices/userSlice";
-import { setDevices, clearDevices } from "../store/slices/deviceSlice";
-import { getProfile, logout, getDeviceList } from "@/api";
+import { setUserInfo } from "../store/slices/userSlice";
+import { setDevices } from "../store/slices/deviceSlice";
+import { getProfile, getDeviceList } from "@/api";
 import styles from "./style.module.scss";
 
 const { Header, Sider, Content } = Layout;
@@ -24,7 +23,6 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { username, avatar } = useSelector((state: RootState) => state.user);
-  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
 
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -50,29 +48,6 @@ const MainLayout: React.FC = () => {
 
     fetchInitialData();
   }, [navigate, dispatch]);
-
-  // 处理退出登录
-  const handleLogout = async () => {
-    try {
-      // 调用退出登录接口
-      await logout();
-
-      // 清除 Redux 状态
-      dispatch(clearUserInfo());
-      dispatch(clearDevices());
-
-      // 跳转到登录页
-      navigate("/login");
-    } catch (error) {
-      console.error("退出登录失败:", error);
-      message.error("退出登录失败，请重试");
-    }
-  };
-
-  // 显示退出确认弹窗
-  const showLogoutModal = () => {
-    setIsLogoutModalVisible(true);
-  };
 
   // 菜单项配置
   const menuItems = [
@@ -104,21 +79,6 @@ const MainLayout: React.FC = () => {
     return matchedItem ? matchedItem.key : "/sleep";
   };
 
-  // 用户下拉菜单
-  const userMenu = {
-    items: [
-      {
-        key: "logout",
-        icon: <LogoutOutlined />,
-        label: "退出登录",
-        onClick: showLogoutModal,
-      },
-    ],
-    style: {
-      width: "120px",
-    },
-  };
-
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Header
@@ -144,15 +104,13 @@ const MainLayout: React.FC = () => {
               className={styles.menu}
             />
             <div className={styles.userSection}>
-              <Dropdown menu={userMenu} placement="topRight">
-                <div
-                  className={styles.userInfo}
-                  onClick={() => navigate("/profile")}
-                >
-                  <Avatar src={avatar} size="large" />
-                  <span className={styles.username}>{username}</span>
-                </div>
-              </Dropdown>
+              <div
+                className={styles.userInfo}
+                onClick={() => navigate("/profile")}
+              >
+                <Avatar src={avatar} size="large" />
+                <span className={styles.username}>{username}</span>
+              </div>
             </div>
           </div>
         </Sider>
@@ -170,17 +128,6 @@ const MainLayout: React.FC = () => {
           </Content>
         </Layout>
       </Layout>
-      <Modal
-        title="退出登录"
-        open={isLogoutModalVisible}
-        onOk={handleLogout}
-        onCancel={() => setIsLogoutModalVisible(false)}
-        okText="确认"
-        cancelText="取消"
-        centered
-      >
-        <p>确定要退出登录吗？</p>
-      </Modal>
     </Layout>
   );
 };

@@ -19,12 +19,17 @@ import {
   CameraOutlined,
   PlusOutlined,
   HeartOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import type { UploadProps } from "antd/es/upload";
 import type { RcFile } from "antd/es/upload/interface";
 import { useDispatch, useSelector } from "react-redux";
-import { updateUserInfo } from "@/store/slices/userSlice";
-import { setDevices, setCurrentDevice } from "@/store/slices/deviceSlice";
+import { updateUserInfo, clearUserInfo } from "@/store/slices/userSlice";
+import {
+  setDevices,
+  setCurrentDevice,
+  clearDevices,
+} from "@/store/slices/deviceSlice";
 import type { RootState } from "@/store";
 import type { UserInfo, Device } from "@/types";
 import dayjs from "dayjs";
@@ -35,10 +40,13 @@ import {
   getDeviceList,
   updateProfile,
   changeAvatar,
+  logout,
 } from "@/api";
 import classNames from "classnames";
+import { useNavigate } from "react-router-dom";
 
 const Profile: React.FC = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const userInfo = useSelector((state: RootState) => state.user);
   const devices = useSelector((state: RootState) => state.device.devices);
@@ -55,6 +63,8 @@ const Profile: React.FC = () => {
   const [isUnbindModalVisible, setIsUnbindModalVisible] = useState(false);
   const [unbindingDevice, setUnbindingDevice] = useState<Device | null>(null);
   const [unbindLoading, setUnbindLoading] = useState(false);
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   const handleEditClick = () => {
     setIsEditing(true);
@@ -215,6 +225,33 @@ const Profile: React.FC = () => {
   const handleSelectDevice = (device: Device) => {
     // 直接更新 Redux 中的当前设备
     dispatch(setCurrentDevice(device));
+  };
+
+  // 处理退出登录
+  const handleLogout = async () => {
+    setIsLogoutModalVisible(true);
+  };
+
+  // 确认退出登录
+  const confirmLogout = async () => {
+    try {
+      setLogoutLoading(true);
+      // 调用退出登录接口
+      await logout();
+
+      // 清除 Redux 状态
+      dispatch(clearUserInfo());
+      dispatch(clearDevices());
+
+      // 跳转到登录页
+      navigate("/login");
+      message.success("退出登录成功");
+    } catch (error) {
+      console.error("退出登录失败:", error);
+      message.error("退出登录失败，请重试");
+      setLogoutLoading(false);
+      setIsLogoutModalVisible(false);
+    }
   };
 
   const DeviceIcon: React.FC<{ type: Device["deviceType"] }> = () => {
@@ -415,6 +452,20 @@ const Profile: React.FC = () => {
         />
       </Card>
 
+      {/* 退出登录卡片 */}
+      <Card title="账号安全" className={styles.securityCard}>
+        <div className={styles.logoutButtonWrapper}>
+          <Button
+            type="primary"
+            danger
+            icon={<LogoutOutlined />}
+            onClick={handleLogout}
+          >
+            退出登录
+          </Button>
+        </div>
+      </Card>
+
       <Modal
         title="绑定设备"
         open={isBindModalVisible}
@@ -451,6 +502,20 @@ const Profile: React.FC = () => {
           是否确认解绑{unbindingDevice?.deviceName}(
           {unbindingDevice?.deviceCode})？
         </p>
+      </Modal>
+
+      {/* 退出登录确认对话框 */}
+      <Modal
+        title="退出登录"
+        open={isLogoutModalVisible}
+        onOk={confirmLogout}
+        onCancel={() => setIsLogoutModalVisible(false)}
+        confirmLoading={logoutLoading}
+        okText="确认"
+        cancelText="取消"
+        centered
+      >
+        <p>确定要退出登录吗？</p>
       </Modal>
     </div>
   );
