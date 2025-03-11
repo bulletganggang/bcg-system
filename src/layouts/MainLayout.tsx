@@ -3,7 +3,6 @@ import { Layout, Menu, theme, Avatar, Dropdown, Modal, message } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
-  HistoryOutlined,
   RestOutlined,
   LogoutOutlined,
   AreaChartOutlined,
@@ -86,11 +85,6 @@ const MainLayout: React.FC = () => {
       key: "/analysis",
       icon: <AreaChartOutlined />,
       label: "数据分析",
-    },
-    {
-      key: "/history",
-      icon: <HistoryOutlined />,
-      label: "历史记录",
     },
     {
       key: "/profile",

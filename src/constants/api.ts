@@ -31,7 +31,6 @@ export const API_PATHS = {
   DATA: {
     DAILY: "/data/daily",
     RANGE: "/data/range",
-    LIST: "/data/list",
   },
   // 可以添加其他模块的接口路径
 } as const;

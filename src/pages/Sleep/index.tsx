@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Card,
   Row,
@@ -19,7 +19,6 @@ import {
 import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 import type { DatePickerProps } from "antd/es/date-picker";
-import { useLocation, useNavigate } from "react-router-dom";
 import styles from "./style.module.scss";
 import { useSelector } from "react-redux";
 import { getDailyData } from "@/api";
@@ -31,8 +30,6 @@ import {
 } from "@/configs/charts/sleep";
 
 const Sleep: React.FC = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [selectedDate, setSelectedDate] = useState<dayjs.Dayjs>(dayjs());
   const [sleepData, setSleepData] = useState<SleepData | null>(null);
@@ -41,47 +38,40 @@ const Sleep: React.FC = () => {
   );
   const { userId } = useSelector((state: RootState) => state.user);
 
-  // 从 URL 参数中获取日期
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const dateParam = params.get("date");
-    if (dateParam) {
-      setSelectedDate(dayjs(dateParam));
-    }
-  }, [location]);
-
   // 加载睡眠数据
-  const loadSleepData = async (date: dayjs.Dayjs) => {
-    if (!currentDevice?.deviceCode) {
-      return;
-    }
+  const loadSleepData = useCallback(
+    async (date: dayjs.Dayjs) => {
+      if (!currentDevice?.deviceCode) {
+        return;
+      }
 
-    try {
-      setLoading(true);
+      try {
+        setLoading(true);
+        const response = await getDailyData({
+          date: date.format("YYYY-MM-DD"),
+          deviceCode: currentDevice.deviceCode,
+          userId,
+        });
+        setSleepData(response.data);
+      } catch (error) {
+        console.error("加载睡眠数据失败:", error);
+        setSleepData(null);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [currentDevice?.deviceCode, userId]
+  );
 
-      const response = await getDailyData({
-        date: date.format("YYYY-MM-DD"),
-        deviceCode: currentDevice.deviceCode,
-        userId,
-      });
-      setSleepData(response.data);
-    } catch (error) {
-      console.error("加载睡眠数据失败:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 日期变化时重新加载数据
+  // 首次加载和设备变化时加载数据
   useEffect(() => {
     loadSleepData(selectedDate);
-  }, [selectedDate, currentDevice]);
+  }, [selectedDate, loadSleepData, currentDevice]);
 
   // 处理日期选择
   const handleDateChange: DatePickerProps["onChange"] = (date) => {
     if (date) {
       setSelectedDate(date);
-      navigate("/sleep");
     }
   };
 
@@ -292,7 +282,7 @@ const Sleep: React.FC = () => {
                         }
                         value={sleepData.respiratory_rate.maximum_bpm}
                         suffix="次/分钟"
-                        valueStyle={{ color: "#cf1322" }}
+                        valueStyle={{ color: "#722ed1" }}
                       />
                     </Space>
                   </Card>

@@ -17,11 +17,3 @@ export const getDailyData = (params: DailyDataParams) => {
 export const getRangeData = (params: RangeDataParams) => {
   return request("get", API_PATHS.DATA.RANGE, params);
 };
-
-/**
- * 获取历史数据列表
- * @param deviceCode 设备编码
- */
-export const getHistoryList = (deviceCode: string) => {
-  return request("get", API_PATHS.DATA.LIST, { deviceCode });
-};
