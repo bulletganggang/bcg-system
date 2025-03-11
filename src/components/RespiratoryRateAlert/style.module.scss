@@ -1,0 +1,20 @@
+.alert {
+  margin-top: 16px;
+
+  :global {
+    .ant-alert-message {
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .ant-alert-description {
+      color: rgba(0, 0, 0, 0.65);
+      line-height: 1.6;
+    }
+
+    .ant-alert-with-description .ant-alert-icon {
+      font-size: 20px;
+      margin-top: 4px;
+    }
+  }
+}

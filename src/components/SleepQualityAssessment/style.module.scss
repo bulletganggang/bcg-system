@@ -1,0 +1,64 @@
+.qualityCard {
+  margin-bottom: 24px;
+
+  .cardIcon {
+    font-size: 18px;
+    margin-right: 8px;
+  }
+
+  .scoreSection {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 24px;
+    background: #fafafa;
+    border-radius: 8px;
+
+    .scoreContent {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      .scoreValue {
+        font-size: 28px;
+        font-weight: bold;
+      }
+
+      .scoreLabel {
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.45);
+      }
+    }
+
+    .qualityInfo {
+      flex: 1;
+
+      h4 {
+        margin-bottom: 8px;
+      }
+    }
+  }
+
+  .suggestionSection {
+    h5 {
+      margin-bottom: 16px;
+    }
+
+    :global {
+      .ant-alert {
+        margin-bottom: 8px;
+        border-radius: 4px;
+        transition: all 0.3s;
+
+        &:hover {
+          transform: translateX(4px);
+        }
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}

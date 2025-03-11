@@ -3,6 +3,34 @@ import type { SleepData } from "@/types";
 import type { ExportData } from "./types";
 
 /**
+ * 获取睡眠质量等级信息
+ */
+const getQualityLevel = (score: number) => {
+  if (score >= 90) {
+    return {
+      level: "优秀",
+      description: "睡眠质量非常好，请继续保持良好的睡眠习惯。",
+    };
+  }
+  if (score >= 80) {
+    return {
+      level: "良好",
+      description: "睡眠质量良好，但仍有提升的空间。",
+    };
+  }
+  if (score >= 70) {
+    return {
+      level: "一般",
+      description: "睡眠质量一般，建议关注相关建议来改善睡眠。",
+    };
+  }
+  return {
+    level: "欠佳",
+    description: "睡眠质量较差，请认真关注相关建议并及时改善。",
+  };
+};
+
+/**
  * 准备睡眠数据导出配置
  * @param sleepData 睡眠数据
  * @returns 导出配置
@@ -25,10 +53,6 @@ export const prepareExportData = (
 
   // 睡眠概览数据
   const sleepSummaryData = [
-    {
-      指标: "睡眠评分",
-      数值: sleepData.sleep_quality_score,
-    },
     {
       指标: "入睡时间",
       数值: dayjs(sleepData.sleep_start_time * 1000).format("YYYY-MM-DD HH:mm"),
@@ -63,29 +87,68 @@ export const prepareExportData = (
     },
   ];
 
-  // 呼吸率数据
+  // 呼吸率数据（包含异常检测）
   const respiratoryRateData = [
     {
+      类型: "数据指标",
       指标: "最低呼吸率",
       数值: `${sleepData.respiratory_rate.minimum_bpm}次/分钟`,
+      状态:
+        sleepData.respiratory_rate.minimum_bpm < 10
+          ? "严重偏低"
+          : sleepData.respiratory_rate.minimum_bpm < 12
+          ? "偏低"
+          : "正常",
     },
     {
+      类型: "数据指标",
       指标: "平均呼吸率",
       数值: `${sleepData.respiratory_rate.average_bpm}次/分钟`,
+      状态:
+        sleepData.respiratory_rate.average_bpm < 10
+          ? "严重偏低"
+          : sleepData.respiratory_rate.average_bpm > 24
+          ? "严重偏高"
+          : sleepData.respiratory_rate.average_bpm < 12 ||
+            sleepData.respiratory_rate.average_bpm > 20
+          ? "偏高"
+          : "正常",
     },
     {
+      类型: "数据指标",
       指标: "最高呼吸率",
       数值: `${sleepData.respiratory_rate.maximum_bpm}次/分钟`,
+      状态:
+        sleepData.respiratory_rate.maximum_bpm > 24
+          ? "严重偏高"
+          : sleepData.respiratory_rate.maximum_bpm > 20
+          ? "偏高"
+          : "正常",
+    },
+    {
+      类型: "参考标准",
+      指标: "正常范围",
+      数值: "12-20次/分钟",
+      状态: "-",
     },
   ];
 
-  // 睡眠建议数据
-  const sleepSuggestionData = sleepData.sleep_suggestion.map(
-    (suggestion, index) => ({
-      序号: index + 1,
-      建议内容: suggestion,
-    })
-  );
+  // 睡眠质量评估（包含建议）
+  const qualityLevel = getQualityLevel(sleepData.sleep_quality_score);
+  const sleepQualityData = [
+    {
+      类型: "评估结果",
+      指标: "睡眠评分",
+      数值: sleepData.sleep_quality_score,
+      评估: `${qualityLevel.level}（${qualityLevel.description}）`,
+    },
+    ...sleepData.sleep_suggestion.map((suggestion, index) => ({
+      类型: "改善建议",
+      指标: `建议${index + 1}`,
+      数值: suggestion,
+      评估: "-",
+    })),
+  ];
 
   return {
     sheets: [
@@ -98,12 +161,12 @@ export const prepareExportData = (
         data: sleepStageData,
       },
       {
-        name: "呼吸率数据",
+        name: "呼吸率分析",
         data: respiratoryRateData,
       },
       {
-        name: "睡眠建议",
-        data: sleepSuggestionData,
+        name: "睡眠质量评估",
+        data: sleepQualityData,
       },
     ],
   };

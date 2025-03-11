@@ -7,7 +7,6 @@ import {
   DatePicker,
   Empty,
   Spin,
-  List,
   Space,
 } from "antd";
 import {
@@ -29,6 +28,8 @@ import {
   getSleepSummaryOption,
 } from "@/configs/charts/sleep";
 import ExportButton from "@/components/ExportButton";
+import SleepQualityAssessment from "@/components/SleepQualityAssessment";
+import RespiratoryRateAlert from "@/components/RespiratoryRateAlert";
 import {
   prepareExportData,
   getExportFileName,
@@ -296,23 +297,17 @@ const Sleep: React.FC = () => {
                         suffix="次/分钟"
                         valueStyle={{ color: "#722ed1" }}
                       />
+                      <RespiratoryRateAlert
+                        respiratoryRate={sleepData.respiratory_rate}
+                      />
                     </Space>
                   </Card>
                 </Col>
               </Row>
             </Card>
 
-            {/* 睡眠建议卡片 */}
-            <Card title="睡眠建议">
-              <List
-                dataSource={sleepData.sleep_suggestion}
-                renderItem={(item) => (
-                  <List.Item>
-                    <div style={{ whiteSpace: "pre-wrap" }}>{item}</div>
-                  </List.Item>
-                )}
-              />
-            </Card>
+            {/* 睡眠质量评估 */}
+            <SleepQualityAssessment sleepData={sleepData} />
           </>
         )}
       </Space>
