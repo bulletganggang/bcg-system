@@ -28,6 +28,11 @@ import {
   getSleepStageOption,
   getSleepSummaryOption,
 } from "@/configs/charts/sleep";
+import ExportButton from "@/components/ExportButton";
+import {
+  prepareExportData,
+  getExportFileName,
+} from "@/utils/pdf-sheet-export/sleep";
 
 const Sleep: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -113,12 +118,19 @@ const Sleep: React.FC = () => {
         <Card
           title="睡眠数据"
           extra={
-            <DatePicker
-              value={selectedDate}
-              onChange={handleDateChange}
-              disabledDate={(current) => current && current.isAfter(dayjs())}
-              allowClear={false}
-            />
+            <Space size="middle">
+              <DatePicker
+                value={selectedDate}
+                onChange={handleDateChange}
+                disabledDate={(current) => current && current.isAfter(dayjs())}
+                allowClear={false}
+              />
+              <ExportButton
+                excelData={prepareExportData(sleepData)}
+                fileNamePrefix={getExportFileName(selectedDate)}
+                disabled={!sleepData || loading}
+              />
+            </Space>
           }
         >
           {loading ? (

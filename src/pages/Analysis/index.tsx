@@ -36,7 +36,7 @@ import {
   getSleepCycleStats,
   getSleepAdvice,
 } from "@/configs/charts/analysis";
-import { getExportConfig, getExportFileName } from "@/utils/pdf-sheet-export";
+import { getExportConfig, getExportFileName } from "@/utils/pdf-sheet-export/analysis";
 import ExportButton from "@/components/ExportButton";
 
 // 添加 weekOfYear 插件以支持周数计算

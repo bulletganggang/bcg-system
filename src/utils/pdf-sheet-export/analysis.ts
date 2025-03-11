@@ -2,21 +2,7 @@ import dayjs from "dayjs";
 import { AnalysisData, ReportType } from "../../types/analysis";
 import { getSleepAdvice } from "../../configs/charts/analysis/sleepAdvice";
 import { getSleepRegularityStats } from "../../configs/charts/analysis/sleepRegularity";
-
-/**
- * 导出表格接口
- */
-export interface ExportSheet {
-  name: string;
-  data: Record<string, any>[];
-}
-
-/**
- * 导出数据接口
- */
-export interface ExportData {
-  sheets: ExportSheet[];
-}
+import type { ExportData } from "./types";
 
 /**
  * 安全获取时间戳格式化字符串
