@@ -1,0 +1,20 @@
+.report {
+  margin-bottom: 16px;
+
+  :global {
+    .ant-alert-message {
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .ant-alert-description {
+      p {
+        margin-bottom: 8px;
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+}

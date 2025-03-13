@@ -5,6 +5,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
   RestOutlined,
   AreaChartOutlined,
+  CompressOutlined,
   UserOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
@@ -60,6 +61,11 @@ const MainLayout: React.FC = () => {
       key: "/analysis",
       icon: <AreaChartOutlined />,
       label: "数据分析",
+    },
+    {
+      key: "/comparison",
+      icon: <CompressOutlined />,
+      label: "数据对比",
     },
     {
       key: "/profile",
