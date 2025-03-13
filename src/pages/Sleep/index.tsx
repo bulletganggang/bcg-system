@@ -26,6 +26,7 @@ import type { SleepData } from "@/types";
 import {
   getSleepStageOption,
   getSleepSummaryOption,
+  getMovementChartOption,
 } from "@/configs/charts/sleep";
 import ExportButton from "@/components/ExportButton";
 import SleepQualityAssessment from "@/components/SleepQualityAssessment";
@@ -258,7 +259,7 @@ const Sleep: React.FC = () => {
                       </div>
                       <ReactECharts
                         option={getSleepSummaryOption(sleepData)}
-                        style={{ height: "400px" }}
+                        style={{ height: "500px" }}
                       />
                     </div>
                   </Card>
@@ -315,6 +316,22 @@ const Sleep: React.FC = () => {
                         respiratoryRate={sleepData.respiratory_rate}
                       />
                     </Space>
+                  </Card>
+                </Col>
+                <Col span={24}>
+                  <Card
+                    title={
+                      <Space>
+                        <span className={styles.cardIcon}>🔄</span>
+                        体动监测
+                      </Space>
+                    }
+                    bordered={false}
+                  >
+                    <ReactECharts
+                      option={getMovementChartOption(sleepData)}
+                      style={{ height: "360px" }}
+                    />
                   </Card>
                 </Col>
               </Row>

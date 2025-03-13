@@ -28,6 +28,20 @@ export interface SleepData {
     /** 清醒时长（分钟） */
     awake_time: number;
   };
+  /** 体动数据 */
+  movement: {
+    /** 体动总时长（分钟） */
+    total_movement_duration_minutes: number;
+    /** 体动类型 */
+    movement_types: Array<{
+      /** 时长（分钟） */
+      duration_minutes: number;
+      /** 类型 */
+      type: "Body Movement" | "Position Change";
+    }>;
+    /** 不活跃总时长（分钟） */
+    total_inactivity_duration_minutes: number;
+  };
   /** 睡眠建议 */
   sleep_suggestion: string[];
   /** 睡眠开始时间戳 */

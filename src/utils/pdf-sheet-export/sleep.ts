@@ -133,6 +133,34 @@ export const prepareExportData = (
     },
   ];
 
+  // 体动监测数据
+  const movementData = [
+    {
+      指标: "不活跃总时长",
+      数值: `${sleepData.movement.total_inactivity_duration_minutes}分钟`,
+    },
+    {
+      指标: "体动总时长",
+      数值: `${sleepData.movement.total_movement_duration_minutes}分钟`,
+    },
+    {
+      指标: "体位改变时长",
+      数值: `${
+        sleepData.movement.movement_types.find(
+          (item) => item.type === "Position Change"
+        )?.duration_minutes || 0
+      }分钟`,
+    },
+    {
+      指标: "身体变动时长",
+      数值: `${
+        sleepData.movement.movement_types.find(
+          (item) => item.type === "Body Movement"
+        )?.duration_minutes || 0
+      }分钟`,
+    },
+  ];
+
   // 睡眠质量评估（包含建议）
   const qualityLevel = getQualityLevel(sleepData.sleep_quality_score);
   const sleepQualityData = [
@@ -163,6 +191,10 @@ export const prepareExportData = (
       {
         name: "呼吸率分析",
         data: respiratoryRateData,
+      },
+      {
+        name: "体动监测",
+        data: movementData,
       },
       {
         name: "睡眠质量评估",
