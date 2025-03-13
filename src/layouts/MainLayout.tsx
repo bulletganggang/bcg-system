@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Layout, Menu, theme, Avatar } from "antd";
+import { Layout, Menu, theme, Avatar, Badge } from "antd";
 import { useSelector, useDispatch } from "react-redux";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import {
@@ -7,6 +7,7 @@ import {
   AreaChartOutlined,
   CompressOutlined,
   UserOutlined,
+  AlertOutlined,
 } from "@ant-design/icons";
 import type { RootState } from "../store";
 import { setUserInfo } from "../store/slices/userSlice";
@@ -24,6 +25,12 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { username, avatar } = useSelector((state: RootState) => state.user);
+  const { records } = useSelector((state: RootState) => state.alert);
+
+  // 未处理的预警记录数量
+  const unprocessedCount = records.filter(
+    (record) => record.status === 0
+  ).length;
 
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -66,6 +73,18 @@ const MainLayout: React.FC = () => {
       key: "/comparison",
       icon: <CompressOutlined />,
       label: "数据对比",
+    },
+    {
+      key: "/alert-settings",
+      icon:
+        unprocessedCount > 0 ? (
+          <Badge count={unprocessedCount} size="small">
+            <AlertOutlined />
+          </Badge>
+        ) : (
+          <AlertOutlined />
+        ),
+      label: "预警设置",
     },
     {
       key: "/profile",
