@@ -29,6 +29,10 @@ export enum AlertRuleTypeText {
   DEEP_SLEEP_RATIO = "深睡比例",
   REM_SLEEP_RATIO = "REM睡眠比例",
   SLEEP_DURATION = "睡眠时长",
+  TOTAL_MOVEMENT = "体动总时长",
+  TOTAL_INACTIVITY = "不活跃总时长",
+  POSITION_CHANGE = "体位改变时长",
+  BODY_MOVEMENT = "身体变动时长",
 }
 
 /**
@@ -52,6 +56,10 @@ export enum AlertRuleUnit {
   DEEP_SLEEP_RATIO = "%",
   REM_SLEEP_RATIO = "%",
   SLEEP_DURATION = "分钟",
+  TOTAL_MOVEMENT = "分钟",
+  TOTAL_INACTIVITY = "分钟",
+  POSITION_CHANGE = "分钟",
+  BODY_MOVEMENT = "分钟",
 }
 
 /**
@@ -83,6 +91,10 @@ export const ruleTypeTextMap: Record<AlertRuleType, AlertRuleTypeText> = {
   [AlertRuleType.DEEP_SLEEP_RATIO]: AlertRuleTypeText.DEEP_SLEEP_RATIO,
   [AlertRuleType.REM_SLEEP_RATIO]: AlertRuleTypeText.REM_SLEEP_RATIO,
   [AlertRuleType.SLEEP_DURATION]: AlertRuleTypeText.SLEEP_DURATION,
+  [AlertRuleType.TOTAL_MOVEMENT]: AlertRuleTypeText.TOTAL_MOVEMENT,
+  [AlertRuleType.TOTAL_INACTIVITY]: AlertRuleTypeText.TOTAL_INACTIVITY,
+  [AlertRuleType.POSITION_CHANGE]: AlertRuleTypeText.POSITION_CHANGE,
+  [AlertRuleType.BODY_MOVEMENT]: AlertRuleTypeText.BODY_MOVEMENT,
 };
 
 /**
@@ -109,4 +121,8 @@ export const ruleUnitMap: Record<AlertRuleType, AlertRuleUnit> = {
   [AlertRuleType.DEEP_SLEEP_RATIO]: AlertRuleUnit.DEEP_SLEEP_RATIO,
   [AlertRuleType.REM_SLEEP_RATIO]: AlertRuleUnit.REM_SLEEP_RATIO,
   [AlertRuleType.SLEEP_DURATION]: AlertRuleUnit.SLEEP_DURATION,
+  [AlertRuleType.TOTAL_MOVEMENT]: AlertRuleUnit.TOTAL_MOVEMENT,
+  [AlertRuleType.TOTAL_INACTIVITY]: AlertRuleUnit.TOTAL_INACTIVITY,
+  [AlertRuleType.POSITION_CHANGE]: AlertRuleUnit.POSITION_CHANGE,
+  [AlertRuleType.BODY_MOVEMENT]: AlertRuleUnit.BODY_MOVEMENT,
 };

@@ -26,6 +26,14 @@ export enum AlertRuleType {
   REM_SLEEP_RATIO = "rem_sleep_ratio",
   /** 睡眠时长 */
   SLEEP_DURATION = "sleep_duration",
+  /** 体动总时长 */
+  TOTAL_MOVEMENT = "total_movement",
+  /** 不活跃总时长 */
+  TOTAL_INACTIVITY = "total_inactivity",
+  /** 体位改变时长 */
+  POSITION_CHANGE = "position_change",
+  /** 身体变动时长 */
+  BODY_MOVEMENT = "body_movement",
 }
 
 /**

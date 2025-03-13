@@ -47,22 +47,46 @@ const getValueToCheck = (data: SleepData, ruleType: AlertRuleType): number => {
   switch (ruleType) {
     case AlertRuleType.SLEEP_QUALITY:
       return data.sleep_quality_score;
-    case AlertRuleType.DEEP_SLEEP_RATIO:
-      return (
-        (data.sleep_summary_data.deep_sleep_overall_minutes /
-          data.sleep_summary_data.total_sleep_duration_minutes) *
-        100
-      );
-    case AlertRuleType.REM_SLEEP_RATIO:
-      return (
-        (data.sleep_summary_data.rem_sleep_overall_minutes /
-          data.sleep_summary_data.total_sleep_duration_minutes) *
-        100
-      );
-    case AlertRuleType.SLEEP_DURATION:
-      return data.sleep_summary_data.total_sleep_duration_minutes;
     case AlertRuleType.RESPIRATORY_RATE:
       return data.respiratory_rate.average_bpm;
+    case AlertRuleType.DEEP_SLEEP_RATIO: {
+      const totalSleepMinutes =
+        data.sleep_summary_data.total_sleep_duration_minutes;
+      if (totalSleepMinutes === 0) return 0;
+      return (
+        (data.sleep_summary_data.deep_sleep_overall_minutes /
+          totalSleepMinutes) *
+        100
+      );
+    }
+    case AlertRuleType.REM_SLEEP_RATIO: {
+      const totalSleepMinutes =
+        data.sleep_summary_data.total_sleep_duration_minutes;
+      if (totalSleepMinutes === 0) return 0;
+      return (
+        (data.sleep_summary_data.rem_sleep_overall_minutes /
+          totalSleepMinutes) *
+        100
+      );
+    }
+    case AlertRuleType.SLEEP_DURATION:
+      return data.sleep_summary_data.total_sleep_duration_minutes;
+    case AlertRuleType.TOTAL_MOVEMENT:
+      return data.movement.total_movement_duration_minutes;
+    case AlertRuleType.TOTAL_INACTIVITY:
+      return data.movement.total_inactivity_duration_minutes;
+    case AlertRuleType.POSITION_CHANGE: {
+      const positionChange = data.movement.movement_types.find(
+        (type) => type.type === "Position Change"
+      );
+      return positionChange?.duration_minutes || 0;
+    }
+    case AlertRuleType.BODY_MOVEMENT: {
+      const bodyMovement = data.movement.movement_types.find(
+        (type) => type.type === "Body Movement"
+      );
+      return bodyMovement?.duration_minutes || 0;
+    }
     default:
       return 0;
   }

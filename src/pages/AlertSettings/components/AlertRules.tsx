@@ -13,6 +13,7 @@ import {
   Tooltip,
   Typography,
   Empty,
+  Dropdown,
 } from "antd";
 import {
   PlusOutlined,
@@ -20,6 +21,7 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
+  DownOutlined,
 } from "@ant-design/icons";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState } from "@/store";
@@ -42,6 +44,7 @@ import {
   operatorTextMap,
   ruleUnitMap,
 } from "@/constants/alert";
+import { ruleSuggestions } from "@/constants/alert/suggestions";
 import styles from "../style.module.scss";
 
 const { Option } = Select;
@@ -130,6 +133,95 @@ const AlertRules: React.FC = () => {
     dispatch(toggleRuleStatus(id));
   };
 
+  // 快速添加规则
+  const handleQuickAdd = (suggestion: (typeof ruleSuggestions)[0]) => {
+    const { name, type, operator, threshold, level, description } = suggestion;
+    dispatch(
+      addRule({
+        name,
+        type,
+        operator,
+        threshold,
+        level,
+        description,
+      })
+    );
+  };
+
+  // 快速添加菜单项
+  const quickAddMenuItems = [
+    {
+      key: "sleep",
+      label: "睡眠质量",
+      type: "group" as const,
+      children: ruleSuggestions
+        .filter((item) => item.type === AlertRuleType.SLEEP_QUALITY)
+        .map((item) => ({
+          key: item.name,
+          label: item.name,
+          onClick: () => handleQuickAdd(item),
+        })),
+    },
+    {
+      key: "respiratory",
+      label: "呼吸率",
+      type: "group" as const,
+      children: ruleSuggestions
+        .filter((item) => item.type === AlertRuleType.RESPIRATORY_RATE)
+        .map((item) => ({
+          key: item.name,
+          label: item.name,
+          onClick: () => handleQuickAdd(item),
+        })),
+    },
+    {
+      key: "stages",
+      label: "睡眠阶段",
+      type: "group" as const,
+      children: ruleSuggestions
+        .filter(
+          (item) =>
+            item.type === AlertRuleType.DEEP_SLEEP_RATIO ||
+            item.type === AlertRuleType.REM_SLEEP_RATIO
+        )
+        .map((item) => ({
+          key: item.name,
+          label: item.name,
+          onClick: () => handleQuickAdd(item),
+        })),
+    },
+    {
+      key: "duration",
+      label: "睡眠时长",
+      type: "group" as const,
+      children: ruleSuggestions
+        .filter((item) => item.type === AlertRuleType.SLEEP_DURATION)
+        .map((item) => ({
+          key: item.name,
+          label: item.name,
+          onClick: () => handleQuickAdd(item),
+        })),
+    },
+    {
+      key: "movement",
+      label: "体动数据",
+      type: "group" as const,
+      children: ruleSuggestions
+        .filter(
+          (item) =>
+            item.type === AlertRuleType.TOTAL_MOVEMENT ||
+            item.type === AlertRuleType.TOTAL_INACTIVITY ||
+            item.type === AlertRuleType.POSITION_CHANGE ||
+            item.type === AlertRuleType.BODY_MOVEMENT
+        )
+        .map((item) => ({
+          key: item.name,
+          label: item.name,
+          onClick: () => handleQuickAdd(item),
+        })),
+    },
+  ];
+
   // 表格列定义
   const columns = [
     {
@@ -210,9 +302,20 @@ const AlertRules: React.FC = () => {
   return (
     <div className={styles.alertRulesContainer}>
       <div className={styles.toolBar}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={showAddModal}>
-          添加规则
-        </Button>
+        <Space>
+          <Dropdown
+            menu={{
+              items: quickAddMenuItems,
+            }}
+          >
+            <Button>
+              快速添加 <DownOutlined />
+            </Button>
+          </Dropdown>
+          <Button type="primary" icon={<PlusOutlined />} onClick={showAddModal}>
+            添加规则
+          </Button>
+        </Space>
       </div>
 
       {rules.length === 0 ? (
@@ -304,7 +407,7 @@ const AlertRules: React.FC = () => {
             <Select placeholder="请选择预警级别">
               {Object.entries(levelTextMap).map(([value, text]) => (
                 <Option key={value} value={value}>
-                  {text}
+                  <Tag color={levelColorMap[value as AlertLevel]}>{text}</Tag>
                 </Option>
               ))}
             </Select>

@@ -10,7 +10,6 @@ import {
   Radio,
   Empty,
   Typography,
-  Popconfirm,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -94,6 +93,7 @@ const AlertRecords: React.FC = () => {
       onOk() {
         dispatch(clearRecords());
       },
+      centered: true,
     });
   };
 
@@ -220,22 +220,14 @@ const AlertRecords: React.FC = () => {
     <div className={styles.alertRecordsContainer}>
       <div className={styles.toolBar}>
         <Space>
-          <Popconfirm
-            title="确定要清空所有预警记录吗?"
-            description="清空后将无法恢复"
-            onConfirm={showClearConfirm}
-            okText="确定"
-            cancelText="取消"
+          <Button
+            danger
+            icon={<DeleteOutlined />}
             disabled={records.length === 0}
+            onClick={showClearConfirm}
           >
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              disabled={records.length === 0}
-            >
-              清空记录
-            </Button>
-          </Popconfirm>
+            清空记录
+          </Button>
         </Space>
       </div>
 
