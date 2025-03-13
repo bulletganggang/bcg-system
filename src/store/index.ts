@@ -3,18 +3,20 @@ import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import userReducer from "./slices/userSlice";
 import deviceReducer from "./slices/deviceSlice";
+import alertReducer from "./slices/alertSlice";
 
 // 配置 persist
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["user", "device"], // 持久化 user 和 device reducer
+  whitelist: ["user", "device", "alert"], // 持久化 user、device 和 alert reducer
 };
 
 // 创建根 reducer
 const rootReducer = combineReducers({
   user: userReducer,
   device: deviceReducer,
+  alert: alertReducer,
 });
 
 // 创建持久化 reducer
