@@ -1,0 +1,43 @@
+.comparisonContainer {
+  .loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+  }
+
+  .emptyText {
+    text-align: center;
+    color: rgba(0, 0, 0, 0.45);
+
+    p {
+      margin: 4px 0;
+
+      &:first-child {
+        font-size: 16px;
+        color: rgba(0, 0, 0, 0.85);
+      }
+    }
+  }
+
+  :global {
+    .ant-alert {
+      margin-bottom: 16px;
+
+      .ant-alert-message {
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .ant-alert-description {
+        p {
+          margin-bottom: 8px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
+  }
+}

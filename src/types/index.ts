@@ -3,4 +3,5 @@ export * from "./analysis";
 export * from "./api";
 export * from "./device";
 export * from "./sleep";
+export * from "./comparison";
 export * from "./alert";
