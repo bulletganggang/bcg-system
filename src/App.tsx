@@ -18,6 +18,7 @@ import { Spin } from "antd";
 // 懒加载页面组件
 const Sleep = React.lazy(() => import("./pages/Sleep"));
 const Analysis = React.lazy(() => import("./pages/Analysis"));
+const AlertSettings = React.lazy(() => import("./pages/AlertSettings"));
 const Login = React.lazy(() => import("./pages/Login"));
 const Error = React.lazy(() => import("./pages/Error"));
 const Profile = React.lazy(() => import("./pages/Profile"));
@@ -71,6 +72,14 @@ const router = createBrowserRouter(
           element={
             <Suspense fallback={<LoadingComponent />}>
               <Analysis />
+            </Suspense>
+          }
+        />
+        <Route
+          path="alert-settings"
+          element={
+            <Suspense fallback={<LoadingComponent />}>
+              <AlertSettings />
             </Suspense>
           }
         />

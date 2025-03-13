@@ -19,9 +19,9 @@ import ReactECharts from "echarts-for-react";
 import dayjs from "dayjs";
 import type { DatePickerProps } from "antd/es/date-picker";
 import styles from "./style.module.scss";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { getDailyData } from "@/api";
-import type { RootState } from "@/store";
+import type { RootState, AppDispatch } from "@/store";
 import type { SleepData } from "@/types";
 import {
   getSleepStageOption,
@@ -34,6 +34,8 @@ import {
   prepareExportData,
   getExportFileName,
 } from "@/utils/pdf-sheet-export/sleep";
+import { addRecord } from "@/store/slices/alertSlice";
+import { checkAlertRules } from "@/utils/alert-utils";
 
 const Sleep: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -43,6 +45,8 @@ const Sleep: React.FC = () => {
     (state: RootState) => state.device.currentDevice
   );
   const { userId } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch<AppDispatch>();
+  const { rules, records } = useSelector((state: RootState) => state.alert);
 
   // 加载睡眠数据
   const loadSleepData = useCallback(
@@ -59,6 +63,16 @@ const Sleep: React.FC = () => {
           userId,
         });
         setSleepData(response.data);
+
+        // 在数据加载完成后进行预警检测
+        if (response.data) {
+          const triggeredAlerts = checkAlertRules(
+            response.data,
+            rules,
+            records
+          );
+          triggeredAlerts.forEach((alert) => dispatch(addRecord(alert)));
+        }
       } catch (error) {
         console.error("加载睡眠数据失败:", error);
         setSleepData(null);
@@ -66,7 +80,7 @@ const Sleep: React.FC = () => {
         setLoading(false);
       }
     },
-    [currentDevice?.deviceCode, userId]
+    [currentDevice?.deviceCode, userId, rules, records, dispatch]
   );
 
   // 首次加载和设备变化时加载数据
