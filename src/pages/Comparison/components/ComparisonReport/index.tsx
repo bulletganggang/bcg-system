@@ -63,6 +63,38 @@ const ComparisonReport: React.FC<ComparisonReportProps> = ({
       )}分钟`
     );
 
+    // 体动数据差异分析
+    const movementDiff = {
+      inactivity:
+        data2.data.movement.total_inactivity_duration_minutes -
+        data1.data.movement.total_inactivity_duration_minutes,
+      totalMovement:
+        data2.data.movement.total_movement_duration_minutes -
+        data1.data.movement.total_movement_duration_minutes,
+      bodyMovement:
+        (data2.data.movement.movement_types.find(
+          (type) => type.type === "Body Movement"
+        )?.duration_minutes || 0) -
+        (data1.data.movement.movement_types.find(
+          (type) => type.type === "Body Movement"
+        )?.duration_minutes || 0),
+      positionChange:
+        (data2.data.movement.movement_types.find(
+          (type) => type.type === "Position Change"
+        )?.duration_minutes || 0) -
+        (data1.data.movement.movement_types.find(
+          (type) => type.type === "Position Change"
+        )?.duration_minutes || 0),
+    };
+
+    messages.push(
+      `体动变化: 不活跃时长${
+        movementDiff.inactivity > 0 ? "增加" : "减少"
+      }${Math.abs(movementDiff.inactivity)}分钟，体动总时长${
+        movementDiff.totalMovement > 0 ? "增加" : "减少"
+      }${Math.abs(movementDiff.totalMovement)}分钟`
+    );
+
     return (
       <Alert
         className={styles.report}

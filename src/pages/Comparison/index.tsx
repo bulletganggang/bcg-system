@@ -22,6 +22,7 @@ import {
   getDurationComparisonOption,
   getStageComparisonOption,
   getHealthStandardOption,
+  getMovementComparisonOption,
 } from "@/configs/charts/comparison";
 import ComparisonReport from "./components/ComparisonReport";
 import styles from "./style.module.scss";
@@ -185,6 +186,14 @@ const Comparison: React.FC = () => {
             <Card title="睡眠阶段对比">
               <ReactECharts
                 option={getStageComparisonOption(comparisonData)}
+                style={{ height: "400px" }}
+              />
+            </Card>
+          </Col>
+          <Col span={24}>
+            <Card title="体动数据对比">
+              <ReactECharts
+                option={getMovementComparisonOption(comparisonData)}
                 style={{ height: "400px" }}
               />
             </Card>
